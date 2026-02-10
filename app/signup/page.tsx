@@ -74,11 +74,15 @@ export default function SignupPage() {
 
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white border-b border-white/30 shadow-lg">
-        <div className="flex items-center justify-between px-6 md:px-16 py-4">
+        <div className="flex items-center justify-between px-4 md:px-16 py-3">
           <Link
             href="/"
-            className="flex items-center transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-            <img src="/transparent-nav-logo.png" alt="Task-O Logo" className="h-10 md:h-12" />
+            className="flex items-center space-x-2 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+          >
+            <img src="/task-o.png" alt="Task-O Logo" className="h-10 md:h-12" />
+            <span className="font-bold text-gray-800 text-lg md:text-xl hover:text-gray-900 transition-colors duration-300">
+              Task-O
+            </span>
           </Link>
 
           {/*<div className="hidden md:flex space-x-10 text-gray-700 font-medium">
@@ -138,7 +142,8 @@ export default function SignupPage() {
 
           {/* RIGHT SIGNUP PANEL */}
           <div className="flex items-center justify-center" data-animate id="signup-form">
-            <div className={`w-full max-w-md space-y-6 bg-white/70 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border border-white/30 hover:shadow-gray-500/20 transition-all duration-1000 ${isVisible['signup-form'] ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+            <div className={`w-full max-w-md space-y-6 bg-white p-8 md:p-10 rounded-3xl shadow-2xl border border-white/30 hover:shadow-gray-500/20 transition-all duration-1000 ${isVisible['signup-form'] ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+
               
               <div className="text-center space-y-3">
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 via-gray-900 to-black bg-clip-text text-transparent">Task-O</h1>

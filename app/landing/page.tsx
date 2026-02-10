@@ -31,7 +31,8 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-slate-100">
+    <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-gray-50 via-gray-100 to-slate-100">
+
       
       {/* Animated background elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -41,12 +42,19 @@ export default function LandingPage() {
       </div>
 
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/60 border-b border-white/30 shadow-lg">
-        <div className="flex items-center justify-between px-6 md:px-16 py-4">
+      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white border-b border-white/30 shadow-lg">
+        <div className="flex items-center justify-between px-4 md:px-16 py-3">
           {/* Logo */}
-          <div className="flex items-center transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-            <img src="/transparent-nav-logo.png" alt="Task-O Logo" className="h-10 md:h-12" />
-          </div>
+          <Link
+            href="/"
+            className="flex items-center space-x-2 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+          >
+            <img src="/task-o.png" alt="Task-O Logo" className="h-10 md:h-12" />
+            <span className="font-bold text-gray-800 text-lg md:text-xl hover:text-gray-900 transition-colors duration-300">
+              Task-O
+            </span>
+          </Link>
+
 
           {/* Nav Links */}
           <div className="hidden md:flex space-x-10 text-gray-700 font-medium">
