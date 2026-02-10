@@ -77,7 +77,7 @@ export default function LoginPage() {
             </span>
           </Link>
 
-          
+
           {/*<div className="hidden md:flex space-x-10 text-gray-700 font-medium">
             {['About', 'Features', 'Contact'].map((item) => (
               <Link
@@ -211,7 +211,7 @@ export default function LoginPage() {
                 </button>
 
                 <p className="text-sm text-gray-600 text-center pt-2">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link href="/signup" className="font-semibold text-gray-800 hover:text-black transition-colors">
                     Sign up
                   </Link>

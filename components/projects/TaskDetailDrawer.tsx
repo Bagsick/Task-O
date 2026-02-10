@@ -156,7 +156,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         </label>
                         <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
                             <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
-                                "{task.description || 'No detailed mission parameters provided.'}"
+                                &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
                             </p>
                         </div>
                     </div>
