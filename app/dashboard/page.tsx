@@ -194,7 +194,7 @@ export default async function DashboardPage() {
                   <SectionDropdown />
                 </div>
                 <div className="w-20 h-20 rounded-[28px] bg-gray-50 dark:bg-slate-800/50 mb-6 flex items-center justify-center text-[#6366f1] text-2xl font-black group-hover:scale-110 transition-transform duration-500 shadow-sm border border-gray-100 dark:border-slate-800">
-                  {team.avatar_url ? <img src={team.avatar_url} className="w-full h-full rounded-[28px] object-cover" /> : team.name[0]}
+                  {team.avatar_url ? <img src={team.avatar_url} alt={team.name} className="w-full h-full rounded-[28px] object-cover" /> : team.name[0]}
                 </div>
                 <h4 className="text-[17px] font-bold text-gray-900 dark:text-slate-100 truncate w-full group-hover:text-[#6366f1] transition-colors">{team.name}</h4>
                 <div className="mt-2 flex flex-col gap-1">
