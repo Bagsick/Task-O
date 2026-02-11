@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'tasko-vert.vercel.app', 'rhenlobaptwpmbwaurky.supabase.co'],
   },
 }
 

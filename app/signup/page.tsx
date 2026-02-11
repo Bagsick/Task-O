@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { UserPlus, Mail, Lock, User, Sparkles } from 'lucide-react'
+import { getURL } from '@/lib/utils'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -42,6 +43,7 @@ export default function SignupPage() {
         password,
         options: {
           data: { full_name: fullName },
+          emailRedirectTo: `${getURL()}auth/callback`,
         },
       })
 
@@ -144,7 +146,7 @@ export default function SignupPage() {
           <div className="flex items-center justify-center" data-animate id="signup-form">
             <div className={`w-full max-w-md space-y-6 bg-white p-8 md:p-10 rounded-3xl shadow-2xl border border-white/30 hover:shadow-gray-500/20 transition-all duration-1000 ${isVisible['signup-form'] ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
 
-              
+
               <div className="text-center space-y-3">
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 via-gray-900 to-black bg-clip-text text-transparent">Task-O</h1>
                 <h2 className="text-2xl font-semibold text-gray-800">Create Your Account</h2>
