@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       {/* Stats Cards Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#9333ea', bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 100%)' },
+          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#9dd8aa', bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 100%)' },
           { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: AssignedTasksIcon, color: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' },
           { label: 'All Boards', value: formatCount(projectCount || 0), icon: AllBoardsIcon, color: '#6366f1', bg: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' },
           { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: ScheduledTasksIcon, color: '#ec4899', bg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)' },
