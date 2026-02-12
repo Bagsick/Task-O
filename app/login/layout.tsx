@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Login | Task-O',
+  title: 'Login',
   description: 'Login to your TaskFlow account',
 }
 
