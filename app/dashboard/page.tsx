@@ -19,109 +19,67 @@ import { DashboardActions, SectionDropdown, TeamActions, TaskPriorityList } from
 import { CompletedTasksIcon, AssignedTasksIcon, AllBoardsIcon, ScheduledTasksIcon } from '@/components/dashboard/LivelyIcons'
 
 export default async function DashboardPage() {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const supabase = createServerSupabaseClient()
+  const { data: auth } = await supabase.auth.getUser()
+  const user = auth?.user
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
-  // Fetch user profile for name
-  const { data: profile } = await supabase
-    .from('users')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
+  // Parallel fetching for high performance
+  const [
+    { data: tasks },
+    { count: projectCount },
+    { data: teams },
+    { data: announcements }
+  ] = await Promise.all([
+    supabase.from('tasks').select('*, projects:project_id(id, name)').or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`).order('created_at', { ascending: false }),
+    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('owner_id', user.id),
+    supabase.from('team_members').select('role, teams(id, name, avatar_url, team_members(count))').eq('user_id', user.id).limit(5),
+    supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(3)
+  ])
 
-  // Fetch user's tasks
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select(`
-      *,
-      projects:project_id (
-        id,
-        name
-      )
-    `)
-    .or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`)
-    .order('created_at', { ascending: false })
+  // Stats calculation
+  const completedCount = tasks?.filter(t => t.status === 'completed')?.length || 0
+  const assignedCount = tasks?.filter(t => t.assigned_to === user.id && t.status !== 'completed')?.length || 0
+  const scheduledCount = tasks?.filter(t => t.due_date && new Date(t.due_date) > new Date() && t.status !== 'completed')?.length || 0
 
-  // Fetch projects count (All Boards)
-  const { count: projectCount } = await supabase
-    .from('projects')
-    .select('*', { count: 'exact', head: true })
-    .eq('owner_id', user.id)
+  const formatCount = (count: number) => (count >= 1000 ? `${(count / 1000).toFixed(1)}K` : count.toString())
 
-  // Fetch user's teams with membership role
-  const { data: teams } = await supabase
-    .from('team_members')
-    .select(`
-        role,
-        teams (
-            id,
-            name,
-            avatar_url,
-            team_members(count)
-        )
-    `)
-    .eq('user_id', user.id)
-    .limit(5)
-
-  // Fetch recent notifications for Announcements
-  const { data: announcements } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(3)
-
-  // Calculate stats
-  const completedCount = tasks?.filter(t => t.status === 'completed').length || 0
-  const assignedCount = tasks?.filter(t => t.assigned_to === user.id && t.status !== 'completed').length || 0
-  const scheduledCount = tasks?.filter(t => t.due_date && new Date(t.due_date) > new Date() && t.status !== 'completed').length || 0
-
-  const formatCount = (count: number) => {
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`
-    return count.toString()
-  }
-
-  const upcomingTasks = tasks
-    ?.filter(t => t.status !== 'completed' && t.due_date)
+  const upcomingTasks = (tasks || [])
+    .filter(t => t.status !== 'completed' && t.due_date)
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .slice(0, 4)
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 max-w-[1400px] mx-auto">
+    <div className="space-y-10 animate-in fade-in duration-700 max-w-[1400px] mx-auto pb-10">
       {/* Stats Cards Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#9333ea', bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 100%)', darkBg: 'rgba(147, 51, 234, 0.15)' },
-          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: AssignedTasksIcon, color: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', darkBg: 'rgba(59, 130, 246, 0.15)' },
-          { label: 'All Boards', value: formatCount(projectCount || 0), icon: AllBoardsIcon, color: '#6366f1', bg: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)', darkBg: 'rgba(99, 102, 241, 0.15)' },
-          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: ScheduledTasksIcon, color: '#ec4899', bg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)', darkBg: 'rgba(236, 72, 153, 0.15)' },
+          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#9333ea', bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 100%)' },
+          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: AssignedTasksIcon, color: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' },
+          { label: 'All Boards', value: formatCount(projectCount || 0), icon: AllBoardsIcon, color: '#6366f1', bg: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' },
+          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: ScheduledTasksIcon, color: '#ec4899', bg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)' },
         ].map((stat, i) => (
           <div
             key={i}
-            className="p-8 rounded-[32px] border border-white/50 dark:border-slate-800/50 shadow-sm flex items-center gap-7 transition-all duration-300 group hover:shadow-xl hover:shadow-indigo-500/5 relative overflow-hidden"
+            className="p-7 rounded-[32px] border border-white/50 dark:border-slate-800/50 shadow-sm flex items-center gap-6 transition-all duration-300 group hover:shadow-xl hover:shadow-indigo-500/5 relative overflow-hidden h-32"
             style={{
-              background: stat.bg,
+              background: stat.bg
             }}
           >
             <div className="hidden dark:block absolute inset-0 bg-slate-900/40 backdrop-blur-xl" />
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full blur-2xl group-hover:bg-white/30 transition-colors" />
+
             <div
-              className="w-16 h-16 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 relative z-10"
+              className="w-14 h-14 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 relative z-10 shrink-0"
               style={{ color: stat.color }}
             >
-              <stat.icon size={48} />
+              <stat.icon size={32} />
             </div>
-            <div className="flex-1 relative z-10">
-              <h3 className="text-[42px] font-black text-black dark:text-white leading-none tracking-tighter mb-1.5 transition-colors duration-300">
+            <div className="flex flex-col relative z-10">
+              <h3 className="text-[32px] font-black text-slate-900 dark:text-white leading-none tracking-tighter mb-1 transition-colors duration-300">
                 {stat.value}
               </h3>
-              <p className="text-[11px] font-black text-black dark:text-white uppercase tracking-[0.15em] leading-none transition-colors duration-300">
+              <p className="text-[10px] font-black text-slate-900/40 dark:text-white/40 uppercase tracking-[0.2em] leading-none transition-colors duration-300">
                 {stat.label}
               </p>
             </div>
