@@ -96,10 +96,10 @@ export default async function DashboardPage() {
       {/* Stats Cards Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CheckCircle2, color: '#9333ea', bg: '#f3e8ff', darkBg: 'rgba(147, 51, 234, 0.1)' },
-          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: MessageSquare, color: '#3b82f6', bg: '#eff6ff', darkBg: 'rgba(59, 130, 246, 0.1)' },
-          { label: 'All Boards', value: formatCount(projectCount || 0), icon: Layout, color: '#6366f1', bg: '#eef2ff', darkBg: 'rgba(99, 102, 241, 0.1)' },
-          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: Calendar, color: '#ec4899', bg: '#fdf2f8', darkBg: 'rgba(236, 72, 153, 0.1)' },
+          { label: 'Completed Objectives', value: formatCount(completedCount), icon: CheckCircle2, color: '#9333ea', bg: '#f3e8ff', darkBg: 'rgba(147, 51, 147, 0.1)' },
+          { label: 'Assigned Objectives', value: formatCount(assignedCount), icon: MessageSquare, color: '#3b82f6', bg: '#eff6ff', darkBg: 'rgba(59, 130, 246, 0.1)' },
+          { label: 'Active Boards', value: formatCount(projectCount || 0), icon: Layout, color: '#6366f1', bg: '#eef2ff', darkBg: 'rgba(99, 102, 241, 0.1)' },
+          { label: 'Scheduled Objectives', value: formatCount(scheduledCount), icon: Calendar, color: '#ec4899', bg: '#fdf2f8', darkBg: 'rgba(236, 72, 153, 0.1)' },
         ].map((stat, i) => (
           <div key={i} className="bg-white dark:bg-slate-900/50 dark:backdrop-blur-xl p-7 rounded-[32px] border border-gray-100 dark:border-slate-800/50 shadow-sm flex items-center gap-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 group">
             <div
@@ -121,8 +121,8 @@ export default async function DashboardPage() {
         <section className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
           <div className="p-8 pb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-[22px] font-black text-gray-900 dark:text-slate-50 tracking-tight">Tasks Priorities</h2>
-              <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic">Team tasks sorted by priority</p>
+              <h2 className="text-[22px] font-black text-gray-900 dark:text-slate-50 tracking-tight">Objective Priorities</h2>
+              <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic">Collective objectives sorted by priority</p>
             </div>
             <div className="flex items-center gap-3">
               <DashboardActions />
@@ -145,7 +145,7 @@ export default async function DashboardPage() {
           <div className="p-8 pb-4 flex items-center justify-between">
             <div>
               <h2 className="text-[22px] font-black text-gray-900 dark:text-slate-50 tracking-tight">Announcements</h2>
-              <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic">From personal and team project</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic">System briefs and project updates</p>
             </div>
             <SectionDropdown />
           </div>
@@ -176,8 +176,8 @@ export default async function DashboardPage() {
       <section className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-sm">
         <div className="flex items-center justify-between mb-10">
           <div>
-            <h2 className="text-[26px] font-black text-gray-900 dark:text-slate-50 tracking-tight">My Teams</h2>
-            <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic lowercase">Teams with assigned tasks</p>
+            <h2 className="text-[26px] font-black text-gray-900 dark:text-slate-50 tracking-tight">Squads</h2>
+            <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic lowercase">Teams with active objectives</p>
           </div>
           <div className="flex items-center gap-3">
             <TeamActions />

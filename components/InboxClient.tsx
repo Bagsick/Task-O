@@ -187,7 +187,7 @@ export default function InboxClient({ initialConversations, currentUser }: Inbox
             <div className="w-[380px] border-r border-gray-100 dark:border-slate-800/50 flex flex-col bg-white dark:bg-slate-900/30">
                 <div className="p-8 pb-4">
                     <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-gray-900 dark:text-slate-50 tracking-tight">Messages</h2>
+                        <h2 className="text-2xl font-black text-gray-900 dark:text-slate-50 tracking-tight">Inbox</h2>
                         <button
                             onClick={focusSearch}
                             className="w-10 h-10 rounded-2xl bg-[#f3f4ff] dark:bg-indigo-500/10 text-[#6366f1] flex items-center justify-center hover:bg-[#e8e9ff] dark:hover:bg-indigo-500/20 transition-all"

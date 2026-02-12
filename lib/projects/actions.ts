@@ -103,7 +103,13 @@ export async function respondToProjectInvitation(projectId: string, accept: bool
     revalidatePath(`/projects/${projectId}`)
 }
 
-export async function createProject(name: string, description: string) {
+export async function createProject(data: {
+    name: string
+    description?: string
+    status?: string
+    start_date?: string
+    end_date?: string
+}) {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -112,10 +118,12 @@ export async function createProject(name: string, description: string) {
     const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
-            name,
-            description,
+            name: data.name,
+            description: data.description,
             owner_id: user.id,
-            status: 'active'
+            status: data.status || 'planning',
+            start_date: data.start_date,
+            end_date: data.end_date
         })
         .select()
         .single()

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Trash2, X, AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Trash2 } from 'lucide-react'
+import Modal from '../ui/Modal'
 
 interface DeleteProjectModalProps {
     isOpen: boolean
@@ -12,38 +12,43 @@ interface DeleteProjectModalProps {
 }
 
 export default function DeleteProjectModal({ isOpen, onClose, onConfirm, projectName, loading }: DeleteProjectModalProps) {
-    if (!isOpen) return null
-
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-300 w-full h-full p-4 overflow-y-auto overflow-x-hidden">
-            <div className="bg-white dark:bg-slate-950 w-full max-w-md rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto">
-                <div className="p-12 text-center">
-                    <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-[24px] flex items-center justify-center text-red-500 mx-auto mb-8">
-                        <AlertTriangle size={32} />
-                    </div>
-
-                    <h2 className="text-[20px] font-black text-gray-900 dark:text-slate-50 tracking-tightest leading-none uppercase mb-4">Confirm Deletion</h2>
-                    <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-relaxed mb-10 italic px-4">
-                        You are about to permanently delete <span className="text-red-500">{projectName.toUpperCase()}</span>. All data will be lost forever.
-                    </p>
-
-                    <div className="flex flex-col gap-3">
-                        <button
-                            onClick={onConfirm}
-                            disabled={loading}
-                            className="w-full px-8 py-4 bg-red-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 active:scale-95 disabled:opacity-50"
-                        >
-                            {loading ? 'Processing...' : 'Delete Project Forever'}
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="w-full px-8 py-4 bg-gray-50 dark:bg-slate-900 text-gray-400 dark:text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-slate-800 transition-all active:scale-95"
-                        >
-                            Keep Project
-                        </button>
-                    </div>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Delete Project"
+            helperText="Confirm permanent deletion of this project"
+            footer={
+                <>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-slate-900 transition-all"
+                    >
+                        Abort
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={loading}
+                        className="flex-1 py-4 text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] hover:bg-rose-50 dark:hover:bg-slate-900 transition-all disabled:opacity-50"
+                    >
+                        {loading ? 'Processing...' : 'Yes, Delete Project'}
+                    </button>
+                </>
+            }
+        >
+            <div className="text-center py-4">
+                <div className="w-16 h-16 bg-rose-50 dark:bg-rose-500/10 rounded-[24px] flex items-center justify-center text-rose-500 mx-auto mb-8 border border-rose-100 dark:border-rose-500/20 shadow-sm">
+                    <AlertTriangle size={32} />
                 </div>
+
+                <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-relaxed mb-4 italic px-4">
+                    Deleting this project will permanently remove <span className="text-rose-500">{projectName.toUpperCase()}</span> and all associated data.
+                </p>
+                <p className="text-[11px] font-bold text-gray-900 dark:text-slate-100 uppercase tracking-widest">
+                    This operation is non-reversible.
+                </p>
             </div>
-        </div>
+        </Modal>
     )
 }

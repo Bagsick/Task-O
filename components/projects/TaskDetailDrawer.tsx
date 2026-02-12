@@ -28,6 +28,9 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
 
     const [status, setStatus] = useState(task.status)
     const [priority, setPriority] = useState(task.priority)
+    const [userRole, setUserRole] = useState<string>('viewer')
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+    const [userTeams, setUserTeams] = useState<string[]>([])
     const [mentionSearch, setMentionSearch] = useState('')
     const [showMentions, setShowMentions] = useState(false)
     const [projectMembers, setProjectMembers] = useState<any[]>([])
@@ -38,16 +41,38 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
         fetchActivities()
         fetchComments()
         fetchProjectMembers()
+        fetchUserRole()
     }, [task.id])
 
+    const fetchUserRole = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        setCurrentUserId(user.id)
+
+        const { data: member } = await supabase
+            .from('project_members')
+            .select('role')
+            .eq('project_id', projectId)
+            .eq('user_id', user.id)
+            .single()
+
+        setUserRole(member?.role || 'viewer')
+
+        const { data: teams } = await supabase
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', user.id)
+
+        setUserTeams(teams?.map(t => t.team_id) || [])
+    }
+
     const fetchActivities = async () => {
-        // Mocking activities for now until task_activity table is confirmed
-        // In a real app, this would be: 
-        // const { data } = await supabase.from('task_activity').select('*').eq('task_id', task.id).order('created_at', { ascending: false })
-        setActivities([
-            { id: '1', type: 'system', message: 'Task initialized by System', created_at: task.created_at, user: { full_name: 'System' } },
-            { id: '2', type: 'log', message: `Status changed to ${task.status}`, created_at: task.updated_at, user: { full_name: 'Technical Unit' } }
-        ])
+        const { data } = await supabase
+            .from('activities')
+            .select('*, user:user_id(full_name, avatar_url)')
+            .eq('task_id', task.id)
+            .order('created_at', { ascending: false })
+        setActivities(data || [])
     }
 
     const fetchComments = async () => {
@@ -68,7 +93,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     }
 
     const handleUpdate = async (updates: any) => {
-        if (!canManage) return
+        if (userRole === 'viewer') return
         setLoading(true)
         try {
             await updateTask(task.id, updates)
@@ -131,7 +156,10 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-4">
+                    <h3 className="text-[10px] font-black text-gray-900 dark:text-slate-50 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Clock size={14} className="text-[#6366f1]" /> Task Details
+                    </h3>
                     <h1 className="text-xl font-black text-gray-900 dark:text-slate-50 uppercase tracking-tightest leading-tight">
                         {task.title}
                     </h1>
@@ -152,11 +180,11 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     {/* Execution Details */}
                     <div className="space-y-4">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <FileText size={12} /> Execution Parameters
+                            <FileText size={12} /> Description
                         </label>
                         <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
                             <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
-                                &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
+                                &quot;{task.description || 'No detailed task details provided.'}&quot;
                             </p>
                         </div>
                     </div>
@@ -168,14 +196,16 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             <div className="relative">
                                 <select
                                     value={status}
+                                    disabled={userRole === 'viewer'}
                                     onChange={(e) => {
                                         setStatus(e.target.value)
                                         handleUpdate({ status: e.target.value })
                                     }}
-                                    className="w-full pl-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 transition-all cursor-pointer"
+                                    className="w-full pl-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="pending">PENDING_QUEUE</option>
                                     <option value="in_progress">ACTIVE_DEPLOY</option>
+                                    <option value="review">PENDING_REVIEW</option>
                                     <option value="completed">MISSION_COMPLETE</option>
                                 </select>
                                 <ChevronRight className="absolute right-4 top-3.5 rotate-90 text-gray-300" size={14} />
@@ -186,11 +216,12 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             <div className="relative">
                                 <select
                                     value={priority}
+                                    disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId)}
                                     onChange={(e) => {
                                         setPriority(e.target.value)
                                         handleUpdate({ priority: e.target.value })
                                     }}
-                                    className="w-full pl-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 transition-all cursor-pointer"
+                                    className="w-full pl-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="low">LOW_PRIORITY</option>
                                     <option value="medium">MEDIUM_PRIORITY</option>
@@ -201,15 +232,102 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         </div>
                     </div>
 
+                    {/* Workflow Buttons */}
+                    {(userRole !== 'viewer') && (
+                        <div className="flex flex-wrap gap-4">
+                            {status === 'pending' && (
+                                <button
+                                    onClick={() => {
+                                        setStatus('in_progress')
+                                        handleUpdate({ status: 'in_progress' })
+                                    }}
+                                    disabled={userRole === 'member' && task.assigned_to !== currentUserId}
+                                    className="flex-1 py-3 bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                                >
+                                    [ Start Work ]
+                                </button>
+                            )}
+                            {status === 'in_progress' && (
+                                <button
+                                    onClick={() => {
+                                        setStatus('review')
+                                        handleUpdate({ status: 'review' })
+                                    }}
+                                    disabled={userRole === 'member' && task.assigned_to !== currentUserId}
+                                    className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                                >
+                                    [ Submit for Review ]
+                                </button>
+                            )}
+                            {status === 'review' && (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            setStatus('completed')
+                                            handleUpdate({ status: 'completed' })
+                                        }}
+                                        disabled={userRole === 'member'}
+                                        className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                                    >
+                                        [ Approve ]
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setStatus('in_progress')
+                                            handleUpdate({ status: 'in_progress' })
+                                        }}
+                                        disabled={userRole === 'member'}
+                                        className="flex-1 py-3 border border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                                    >
+                                        [ Request Changes ]
+                                    </button>
+                                </>
+                            )}
+                            {status === 'completed' && (
+                                <button
+                                    onClick={() => {
+                                        setStatus('pending')
+                                        handleUpdate({ status: 'pending' })
+                                    }}
+                                    className="w-full py-3 bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-indigo-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-gray-200 dark:border-slate-700"
+                                >
+                                    [ Reopen Objective ]
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {/* Meta Info */}
                     <div className="grid grid-cols-2 gap-6 px-2 py-4 border-y border-gray-50 dark:border-slate-800/50">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                                 <User size={18} />
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Assignee</p>
-                                <p className="text-[11px] font-black text-gray-900 dark:text-slate-100">{task.assignee?.full_name || 'Unassigned'}</p>
+                                <div className="relative group/assignee">
+                                    <select
+                                        value={task.assigned_to || ''}
+                                        disabled={userRole === 'viewer' || userRole === 'member'}
+                                        onChange={(e) => handleUpdate({ assigned_to: e.target.value })}
+                                        className="w-full bg-transparent text-[11px] font-black text-gray-900 dark:text-slate-100 appearance-none outline-none disabled:opacity-100"
+                                    >
+                                        <option value="">Unassigned</option>
+                                        {projectMembers.filter(m => {
+                                            if (userRole === 'tech_lead') {
+                                                // Should ideally filter by team, but we need to fetch team members for all lead teams
+                                                // For now, simpler check is handled server side, but let's try to be helpful in UI
+                                                return true
+                                            }
+                                            return true
+                                        }).map(m => (
+                                            <option key={m.id} value={m.id}>{m.full_name || m.email}</option>
+                                        ))}
+                                    </select>
+                                    {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead') && (
+                                        <ChevronRight size={10} className="absolute -right-3 top-1/2 -translate-y-1/2 rotate-90 text-gray-300 opacity-0 group-hover/assignee:opacity-100 transition-opacity" />
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
