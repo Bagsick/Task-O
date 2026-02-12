@@ -16,6 +16,7 @@ import {
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { DashboardActions, SectionDropdown, TeamActions, TaskPriorityList } from '@/components/dashboard/DashboardClient'
+import { CompletedTasksIcon, AssignedTasksIcon, AllBoardsIcon, ScheduledTasksIcon } from '@/components/dashboard/LivelyIcons'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -96,21 +97,33 @@ export default async function DashboardPage() {
       {/* Stats Cards Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CheckCircle2, color: '#9333ea', bg: '#f3e8ff', darkBg: 'rgba(147, 51, 234, 0.1)' },
-          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: MessageSquare, color: '#3b82f6', bg: '#eff6ff', darkBg: 'rgba(59, 130, 246, 0.1)' },
-          { label: 'All Boards', value: formatCount(projectCount || 0), icon: Layout, color: '#6366f1', bg: '#eef2ff', darkBg: 'rgba(99, 102, 241, 0.1)' },
-          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: Calendar, color: '#ec4899', bg: '#fdf2f8', darkBg: 'rgba(236, 72, 153, 0.1)' },
+          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#9333ea', bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 100%)', darkBg: 'rgba(147, 51, 234, 0.15)' },
+          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: AssignedTasksIcon, color: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', darkBg: 'rgba(59, 130, 246, 0.15)' },
+          { label: 'All Boards', value: formatCount(projectCount || 0), icon: AllBoardsIcon, color: '#6366f1', bg: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)', darkBg: 'rgba(99, 102, 241, 0.15)' },
+          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: ScheduledTasksIcon, color: '#ec4899', bg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)', darkBg: 'rgba(236, 72, 153, 0.15)' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900/50 dark:backdrop-blur-xl p-7 rounded-[32px] border border-gray-100 dark:border-slate-800/50 shadow-sm flex items-center gap-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 group">
+          <div
+            key={i}
+            className="p-8 rounded-[32px] border border-white/50 dark:border-slate-800/50 shadow-sm flex items-center gap-7 transition-all duration-300 group hover:shadow-xl hover:shadow-indigo-500/5 relative overflow-hidden"
+            style={{
+              background: stat.bg,
+            }}
+          >
+            <div className="hidden dark:block absolute inset-0 bg-slate-900/40 backdrop-blur-xl" />
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full blur-2xl group-hover:bg-white/30 transition-colors" />
             <div
-              className="w-16 h-16 rounded-[24px] flex items-center justify-center border-2 border-transparent transition-transform group-hover:scale-110"
-              style={{ backgroundColor: typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? stat.darkBg : stat.bg, color: stat.color }}
+              className="w-16 h-16 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 relative z-10"
+              style={{ color: stat.color }}
             >
-              <stat.icon size={26} />
+              <stat.icon size={48} />
             </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-widest">{stat.label}</p>
-              <h3 className="text-[28px] font-black text-gray-900 dark:text-slate-50 leading-none tracking-tight">{stat.value}</h3>
+            <div className="flex-1 relative z-10">
+              <h3 className="text-[42px] font-black text-black dark:text-white leading-none tracking-tighter mb-1.5 transition-colors duration-300">
+                {stat.value}
+              </h3>
+              <p className="text-[11px] font-black text-black dark:text-white uppercase tracking-[0.15em] leading-none transition-colors duration-300">
+                {stat.label}
+              </p>
             </div>
           </div>
         ))}
@@ -121,8 +134,8 @@ export default async function DashboardPage() {
         <section className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
           <div className="p-8 pb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-[22px] font-black text-gray-900 dark:text-slate-50 tracking-tight">Tasks Priorities</h2>
-              <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic">Team tasks sorted by priority</p>
+              <h2 className="text-[22px] font-black text-black dark:text-white tracking-tight">Tasks Priorities</h2>
+              <p className="text-xs text-black/60 dark:text-white/60 font-bold outfit">Team tasks sorted by priority</p>
             </div>
             <div className="flex items-center gap-3">
               <DashboardActions />
