@@ -40,7 +40,7 @@ export default function NewTeamPage() {
         setError(null)
         try {
             const emailList = emails.split(',').map(e => e.trim()).filter(e => e.length > 0)
-            const team = await createTeam(name, description, projectId || undefined, emailList)
+            const team = await createTeam(name, description, projectId || undefined, undefined, undefined, emailList)
             router.push(`/teams/${team.id}`)
             router.refresh()
         } catch (error: any) {

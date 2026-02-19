@@ -156,7 +156,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         </label>
                         <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
                             <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
-                                "{task.description || 'No detailed mission parameters provided.'}"
+                                &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
                             </p>
                         </div>
                     </div>
@@ -252,7 +252,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
                                             {a.type === 'comment' ? (
                                                 <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
-                                                    {a.user?.avatar_url ? <img src={a.user.avatar_url} className="w-full h-full object-cover" /> : (a.user?.full_name?.[0] || 'U')}
+                                                    {a.user?.avatar_url ? <img src={a.user.avatar_url} className="w-full h-full object-cover" alt={a.user.full_name || 'User avatar'} /> : (a.user?.full_name?.[0] || 'U')}
                                                 </div>
                                             ) : <Shield size={14} />}
                                         </div>
