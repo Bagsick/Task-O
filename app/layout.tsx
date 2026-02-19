@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 // Default metadata for the app
 export const metadata: Metadata = {
-  title: 'Tuesday',
+  title: 'Task-O',
   description: 'Professional task and project management application',
 }
 
