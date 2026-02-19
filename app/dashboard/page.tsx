@@ -55,16 +55,17 @@ export default async function DashboardPage() {
       {/* Stats Cards Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#9dd8aa', bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 100%)' },
-          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: AssignedTasksIcon, color: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' },
-          { label: 'All Boards', value: formatCount(projectCount || 0), icon: AllBoardsIcon, color: '#6366f1', bg: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' },
-          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: ScheduledTasksIcon, color: '#ec4899', bg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)' },
+          { label: 'Completed Tasks', value: formatCount(completedCount), icon: CompletedTasksIcon, color: '#16a34a', bg: '#dcfce7', shadowColor: 'rgba(22, 163, 74, 0.15)' },
+          { label: 'Assigned Tasks', value: formatCount(assignedCount), icon: AssignedTasksIcon, color: '#3b82f6', bg: '#eff6ff', shadowColor: 'rgba(59, 130, 246, 0.15)' },
+          { label: 'All Boards', value: formatCount(projectCount || 0), icon: AllBoardsIcon, color: '#6366f1', bg: '#eef2ff', shadowColor: 'rgba(99, 102, 241, 0.15)' },
+          { label: 'Scheduled Tasks', value: formatCount(scheduledCount), icon: ScheduledTasksIcon, color: '#ec4899', bg: '#fdf2f8', shadowColor: 'rgba(236, 72, 153, 0.15)' },
         ].map((stat, i) => (
           <div
             key={i}
-            className="p-7 rounded-[32px] border border-white/50 dark:border-slate-800/50 shadow-sm flex items-center gap-6 transition-all duration-300 group hover:shadow-xl hover:shadow-indigo-500/5 relative overflow-hidden h-32"
+            className="p-4 sm:p-5 lg:p-7 rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-gray-100/10 dark:border-white/5 flex items-center gap-3 sm:gap-4 lg:gap-6 hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
             style={{
-              background: stat.bg
+              backgroundColor: `${stat.color}25`,
+              boxShadow: `0 10px 30px -5px ${stat.shadowColor}`
             }}
           >
             <div className="hidden dark:block absolute inset-0 bg-slate-900/40 backdrop-blur-xl" />

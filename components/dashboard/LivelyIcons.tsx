@@ -4,8 +4,8 @@ export const CompletedTasksIcon = ({ size = 48 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <linearGradient id="grad-completed-final" x1="12" y1="12" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#A855F7" />
-                <stop offset="1" stopColor="#7E22CE" />
+                <stop stopColor="#4ade80" />
+                <stop offset="1" stopColor="#16a34a" />
             </linearGradient>
             <filter id="glow-p-final" x="0" y="0" width="64" height="64" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
                 <feGaussianBlur stdDeviation="3" result="blur" />

@@ -89,9 +89,9 @@ export function TaskPriorityList({ tasks, completedCount, upcomingCount, overdue
     }).slice(0, 4)
 
     const tabs = [
-        { label: 'Upcoming', count: upcomingCount },
-        { label: 'Overdue', count: overdueCount },
-        { label: 'Completed', count: completedCount }
+        { label: 'Upcoming', count: upcomingCount, color: '#f97316' },
+        { label: 'Overdue', count: overdueCount, color: '#e11d48' },
+        { label: 'Completed', count: completedCount, color: '#16a34a' }
     ]
 
     return (
@@ -101,10 +101,16 @@ export function TaskPriorityList({ tasks, completedCount, upcomingCount, overdue
                     <button
                         key={tab.label}
                         onClick={() => setActiveTab(tab.label as any)}
-                        className={`px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === tab.label ? 'bg-[#f3f4ff] dark:bg-indigo-500/10 text-[#6366f1]' : 'bg-[#f8f9fa] dark:bg-slate-800/50 text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800'
+                        style={{
+                            backgroundColor: `${tab.color}25`, // Opacity 25% for all tabs
+                            color: tab.color,
+                            borderColor: activeTab === tab.label ? `${tab.color}60` : `${tab.color}10`,
+                            borderWidth: '2px',
+                        }}
+                        className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${activeTab === tab.label ? 'shadow-lg scale-105' : 'hover:scale-105 hover:shadow-md'
                             }`}
                     >
-                        {tab.count} {tab.label}
+                        {tab.count} {tab.label.toLowerCase()}
                     </button>
                 ))}
             </div>
