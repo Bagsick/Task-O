@@ -16,7 +16,10 @@ export async function updateSession(request: NextRequest) {
   const supabase = createMiddlewareClient({
     req: request,
     res: response
-  })
+  }, {
+    supabaseUrl,
+    supabaseKey: supabaseAnonKey,
+  } as any)
 
   const {
     data: { user },

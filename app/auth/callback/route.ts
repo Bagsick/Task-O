@@ -9,7 +9,13 @@ export async function GET(request: NextRequest) {
 
     if (code) {
         const cookieStore = cookies()
-        const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+        const supabase = createRouteHandlerClient({ cookies: () => cookieStore }, {
+            supabaseUrl,
+            supabaseKey: supabaseAnonKey,
+        } as any)
         await supabase.auth.exchangeCodeForSession(code)
     }
 

@@ -13,7 +13,11 @@ export const createServerSupabaseClient = () => {
   // This is a known workaround for Next.js build errors in hybrid client/server modules.
   const { cookies } = require('next/headers')
   const cookieStore = cookies()
+
   return createServerComponentClient({
     cookies: () => cookieStore
-  })
+  }, {
+    supabaseUrl,
+    supabaseKey: supabaseAnonKey,
+  } as any)
 }
