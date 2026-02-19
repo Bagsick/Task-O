@@ -38,3 +38,38 @@ export async function deleteNotification(notificationId: string) {
     revalidatePath('/notifications')
     revalidatePath('/dashboard')
 }
+
+export async function markAllNotificationsAsRead() {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+
+    if (error) throw error
+
+    revalidatePath('/notifications')
+    revalidatePath('/dashboard')
+}
+
+export async function clearAllNotifications() {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id)
+
+    if (error) throw error
+
+    revalidatePath('/notifications')
+    revalidatePath('/dashboard')
+}

@@ -211,8 +211,8 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-between text-xs font-bold text-gray-900 dark:text-slate-100">
                                 <span className="uppercase tracking-widest">{getStatusLabel(status)}</span>
                                 <div className={`w-2 h-2 rounded-full ${status === 'completed' ? 'bg-emerald-500' :
-                                        status === 'in_progress' ? 'bg-amber-500' :
-                                            'bg-indigo-400'
+                                    status === 'in_progress' ? 'bg-amber-500' :
+                                        'bg-indigo-400'
                                     } shadow-[0_0_10px_-2px_rgba(0,0,0,0.1)]`} />
                             </div>
                         </div>
@@ -259,29 +259,28 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         </div>
                     </div>
 
-                        <div className="space-y-6">
-                            {filteredActivity.map((a, idx) => (
-                                <div key={idx} className="flex gap-4 group">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
-                                            {a.type === 'comment' ? (
-                                                <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
-                                                    {a.user?.avatar_url ? <img src={a.user.avatar_url} className="w-full h-full object-cover" alt={a.user.full_name || 'User avatar'} /> : (a.user?.full_name?.[0] || 'U')}
-                                                </div>
-                                            ) : <Shield size={14} />}
-                                        </div>
-                                        <div className="flex-1 w-px bg-gray-50 dark:bg-slate-800 group-last:hidden" />
+                    <div className="space-y-6">
+                        {filteredActivity.map((a, idx) => (
+                            <div key={idx} className="flex gap-4 group">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
+                                        {a.type === 'comment' ? (
+                                            <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
+                                                {a.user?.avatar_url ? <img src={a.user.avatar_url} className="w-full h-full object-cover" alt={a.user.full_name || 'User avatar'} /> : (a.user?.full_name?.[0] || 'U')}
+                                            </div>
+                                        ) : <Shield size={14} />}
                                     </div>
-                                    <div className="flex-1 space-y-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{c.user?.full_name}</span>
-                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(c.created_at), 'MMM dd')}</span>
-                                        </div>
-                                        <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{c.content}</p>
-                                    </div>
+                                    <div className="flex-1 w-px bg-gray-50 dark:bg-slate-800 group-last:hidden" />
                                 </div>
-                            ))}
-                        </div>
+                                <div className="flex-1 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{a.user?.full_name}</span>
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(a.created_at), 'MMM dd')}</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{a.message}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -312,6 +311,6 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     {status === 'completed' ? 'Tasks Done' : 'Mark as Done'}
                 </button>
             </div>
-        </div>
+        </div >
     )
 }
