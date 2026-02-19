@@ -1,10 +1,27 @@
 'use server'
 
-
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function clearAllNotifications() {
-    const { createServerSupabaseClient } = require('@/lib/supabase/server')
+export async function markNotificationAsRead(notificationId: string) {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId)
+        .eq('user_id', user.id)
+
+    if (error) throw error
+
+    revalidatePath('/notifications')
+    revalidatePath('/dashboard')
+}
+
+export async function deleteNotification(notificationId: string) {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -13,17 +30,16 @@ export async function clearAllNotifications() {
     const { error } = await supabase
         .from('notifications')
         .delete()
+        .eq('id', notificationId)
         .eq('user_id', user.id)
 
     if (error) throw error
 
+    revalidatePath('/notifications')
     revalidatePath('/dashboard')
-    revalidatePath('/inbox')
-    return { success: true }
 }
 
 export async function markAllNotificationsAsRead() {
-    const { createServerSupabaseClient } = require('@/lib/supabase/server')
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -37,37 +53,23 @@ export async function markAllNotificationsAsRead() {
 
     if (error) throw error
 
+    revalidatePath('/notifications')
     revalidatePath('/dashboard')
-    revalidatePath('/inbox')
-    return { success: true }
 }
 
-export async function markNotificationAsRead(id: string) {
-    const { createServerSupabaseClient } = require('@/lib/supabase/server')
+export async function clearAllNotifications() {
     const supabase = await createServerSupabaseClient()
-    const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id)
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (error) throw error
+    if (!user) throw new Error('Unauthorized')
 
-    revalidatePath('/dashboard')
-    revalidatePath('/inbox')
-    return { success: true }
-}
-
-export async function deleteNotification(id: string) {
-    const { createServerSupabaseClient } = require('@/lib/supabase/server')
-    const supabase = await createServerSupabaseClient()
     const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('id', id)
+        .eq('user_id', user.id)
 
     if (error) throw error
 
+    revalidatePath('/notifications')
     revalidatePath('/dashboard')
-    revalidatePath('/inbox')
-    return { success: true }
 }

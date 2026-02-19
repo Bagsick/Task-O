@@ -169,13 +169,17 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-900 animate-in slide-in-from-right duration-300">
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <div className="p-8 space-y-6">
-                    {/* Title Section (Read-only input style) */}
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Title</label>
-                        <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-sm font-black text-gray-900 dark:text-slate-100 uppercase tracking-tightest">
-                            {task.title}
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <div className="p-6 space-y-8">
+                    {/* Execution Details */}
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <FileText size={12} /> Execution Parameters
+                        </label>
+                        <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
+                            <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
+                                &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
+                            </p>
                         </div>
                     </div>
 
@@ -207,8 +211,8 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-between text-xs font-bold text-gray-900 dark:text-slate-100">
                                 <span className="uppercase tracking-widest">{getStatusLabel(status)}</span>
                                 <div className={`w-2 h-2 rounded-full ${status === 'completed' ? 'bg-emerald-500' :
-                                        status === 'in_progress' ? 'bg-amber-500' :
-                                            'bg-indigo-400'
+                                    status === 'in_progress' ? 'bg-amber-500' :
+                                        'bg-indigo-400'
                                     } shadow-[0_0_10px_-2px_rgba(0,0,0,0.1)]`} />
                             </div>
                         </div>
@@ -255,42 +259,28 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         </div>
                     </div>
 
-                    {/* Mentions / Discussion Preview */}
-                    <div className="space-y-4 pt-4 border-t border-gray-50 dark:border-slate-800/50">
-                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Commitments & Discussion</label>
-
-                        {/* Write Comment simplified like description but smaller */}
-                        <form onSubmit={handleCommentSubmit} className="relative group">
-                            <textarea
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                className="w-full pl-5 pr-12 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-[11px] font-bold text-gray-700 dark:text-slate-200 outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] transition-all min-h-[48px] max-h-32 shadow-sm placeholder:font-medium"
-                                placeholder="Add a comment or update..."
-                            />
-                            <button
-                                type="submit"
-                                className="absolute right-2 bottom-2 p-2 bg-[#6366f1] text-white rounded-xl hover:bg-[#5558e3] shadow-lg shadow-[#6366f1]/20 active:scale-95 transition-all"
-                            >
-                                <Send size={14} />
-                            </button>
-                        </form>
-
-                        <div className="space-y-4 mt-6">
-                            {comments.slice().reverse().map((c, i) => (
-                                <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-gray-50 dark:border-slate-800/50 shadow-sm transition-all hover:shadow-md">
-                                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0 text-[10px] font-black text-indigo-500 border border-indigo-100 dark:border-indigo-500/20">
-                                        {c.user?.full_name?.[0] || 'U'}
+                    <div className="space-y-6">
+                        {filteredActivity.map((a, idx) => (
+                            <div key={idx} className="flex gap-4 group">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
+                                        {a.type === 'comment' ? (
+                                            <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
+                                                {a.user?.avatar_url ? <img src={a.user.avatar_url} className="w-full h-full object-cover" alt={a.user.full_name || 'User avatar'} /> : (a.user?.full_name?.[0] || 'U')}
+                                            </div>
+                                        ) : <Shield size={14} />}
                                     </div>
-                                    <div className="flex-1 space-y-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{c.user?.full_name}</span>
-                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(c.created_at), 'MMM dd')}</span>
-                                        </div>
-                                        <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{c.content}</p>
-                                    </div>
+                                    <div className="flex-1 w-px bg-gray-50 dark:bg-slate-800 group-last:hidden" />
                                 </div>
-                            ))}
-                        </div>
+                                <div className="flex-1 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{a.user?.full_name}</span>
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(a.created_at), 'MMM dd')}</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{a.message}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -321,6 +311,6 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     {status === 'completed' ? 'Tasks Done' : 'Mark as Done'}
                 </button>
             </div>
-        </div>
+        </div >
     )
 }
