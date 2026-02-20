@@ -98,10 +98,10 @@ export default async function TaskDetailPage({
           <section className="bg-white dark:bg-slate-900/40 p-10 rounded-[40px] border border-gray-100 dark:border-slate-800/50 shadow-sm backdrop-blur-xl">
             <div className="flex items-center gap-2 mb-6">
               <Info size={16} className="text-[#6366f1]" />
-              <h2 className="text-[14px] font-black text-gray-900 dark:text-slate-50 uppercase tracking-widest leading-none">Objective & Context</h2>
+              <h2 className="text-[14px] font-black text-gray-900 dark:text-slate-50 uppercase tracking-widest leading-none">Task Detail & Context</h2>
             </div>
             <div className="text-[15px] text-gray-600 dark:text-slate-400 leading-relaxed font-medium whitespace-pre-wrap italic">
-              {task.description || 'No detailed context provided for this objective.'}
+              {task.description || 'No detailed context provided for this task.'}
             </div>
           </section>
         </div>

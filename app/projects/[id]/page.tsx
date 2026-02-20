@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { Activity, Zap, Users, Target, AlertCircle, Clock } from 'lucide-react'
 import ProjectActions from '@/components/projects/ProjectActions'
+import { CompletedTasksIcon, AssignedTasksIcon, AllBoardsIcon, ScheduledTasksIcon } from '@/components/dashboard/LivelyIcons'
 
 export default async function ProjectOverviewPage({
   params
@@ -80,7 +81,10 @@ export default async function ProjectOverviewPage({
         <div className="flex items-center justify-between mt-4">
           <div>
             <span className="text-sm font-bold text-gray-400 dark:text-slate-500">Project Status: </span>
-            <span className="text-sm font-black text-emerald-500 uppercase tracking-widest">{status} ({healthScore}%)</span>
+            <span className={`text-sm font-black uppercase tracking-widest ${status === 'On Track' ? 'text-emerald-500' :
+              status === 'At Risk' ? 'text-amber-500' :
+                'text-red-500'
+              }`}>{status} ({healthScore}%)</span>
           </div>
           <div>
             <span className="text-sm font-bold text-gray-400 dark:text-slate-500">Timeline: </span>
@@ -93,20 +97,37 @@ export default async function ProjectOverviewPage({
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white dark:bg-slate-900/40 p-10 rounded-[40px] border border-gray-100 dark:border-slate-800/50 shadow-sm backdrop-blur-xl group hover:border-[#6366f1]/20 transition-all">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Total Deliverables</p>
-          <h3 className="text-[48px] font-black text-gray-900 dark:text-slate-50 tracking-tightest leading-none">{totalTasks}</h3>
-        </div>
+        {[
+          { label: 'Total Tasks', value: totalTasks, icon: AllBoardsIcon, color: '#6366f1', shadowColor: 'rgba(99, 102, 241, 0.15)' },
+          { label: 'Completed', value: completedTasks, icon: CompletedTasksIcon, color: '#16a34a', shadowColor: 'rgba(22, 163, 74, 0.15)' },
+          { label: 'Overdue / Risks', value: overdueTasks, icon: ScheduledTasksIcon, color: '#ec4899', shadowColor: 'rgba(236, 72, 153, 0.15)' },
+        ].map((stat, i) => (
+          <div
+            key={i}
+            className="p-7 rounded-[40px] border border-gray-100/10 dark:border-white/5 flex items-center gap-6 hover:shadow-2xl transition-all duration-500 group relative overflow-hidden"
+            style={{
+              backgroundColor: `${stat.color}15`,
+              boxShadow: `0 10px 30px -5px ${stat.shadowColor}`
+            }}
+          >
+            <div className="hidden dark:block absolute inset-0 bg-slate-900/40 backdrop-blur-xl" />
 
-        <div className="bg-white dark:bg-slate-900/40 p-10 rounded-[40px] border border-gray-100 dark:border-slate-800/50 shadow-sm backdrop-blur-xl group hover:border-emerald-500/20 transition-all">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Completed</p>
-          <h3 className="text-[48px] font-black text-emerald-500 tracking-tightest leading-none">{completedTasks}</h3>
-        </div>
+            {/* Full-Card Hover Fill Background */}
+            <div
+              className="absolute inset-0 transition-opacity duration-500 opacity-0 group-hover:opacity-[0.25]"
+              style={{ backgroundColor: stat.color }}
+            />
 
-        <div className="bg-white dark:bg-slate-900/40 p-10 rounded-[40px] border border-gray-100 dark:border-slate-800/50 shadow-sm backdrop-blur-xl group hover:border-red-500/20 transition-all">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Overdue / Risks</p>
-          <h3 className="text-[48px] font-black text-red-500 tracking-tightest leading-none">{overdueTasks}</h3>
-        </div>
+            <div className="w-14 h-14 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10 shrink-0" style={{ color: stat.color }}>
+              <stat.icon size={32} />
+            </div>
+
+            <div className="flex flex-col relative z-10">
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1 group-hover:opacity-100 transition-opacity" style={{ color: stat.color }}>{stat.label}</p>
+              <h3 className="text-[32px] font-black tracking-tightest leading-none group-hover:scale-105 transition-transform origin-left" style={{ color: stat.color }}>{stat.value}</h3>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Team Progress & Strategy */}

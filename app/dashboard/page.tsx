@@ -62,27 +62,33 @@ export default async function DashboardPage() {
         ].map((stat, i) => (
           <div
             key={i}
-            className="p-4 sm:p-5 lg:p-7 rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-gray-100/10 dark:border-white/5 flex items-center gap-3 sm:gap-4 lg:gap-6 hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+            className="p-4 sm:p-5 lg:p-7 rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-gray-100/10 dark:border-white/5 flex items-center gap-3 sm:gap-4 lg:gap-6 hover:shadow-2xl transition-all duration-500 group relative overflow-hidden"
             style={{
-              backgroundColor: `${stat.color}25`,
+              backgroundColor: `${stat.color}15`,
               boxShadow: `0 10px 30px -5px ${stat.shadowColor}`
             }}
           >
             <div className="hidden dark:block absolute inset-0 bg-slate-900/40 backdrop-blur-xl" />
 
+            {/* Full-Card Hover Fill Background */}
             <div
-              className="w-14 h-14 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 relative z-10 shrink-0"
+              className="absolute inset-0 transition-opacity duration-500 opacity-0 group-hover:opacity-[0.25]"
+              style={{ backgroundColor: stat.color }}
+            />
+
+            <div
+              className="w-14 h-14 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10 shrink-0"
               style={{ color: stat.color }}
             >
               <stat.icon size={32} />
             </div>
             <div className="flex flex-col relative z-10">
-              <h3 className="text-[32px] font-black text-slate-900 dark:text-white leading-none tracking-tighter mb-1 transition-colors duration-300">
-                {stat.value}
-              </h3>
-              <p className="text-[10px] font-black text-slate-900/40 dark:text-white/40 uppercase tracking-[0.2em] leading-none transition-colors duration-300">
+              <p className="text-[10px] font-black text-slate-900/40 dark:text-white/40 uppercase tracking-[0.2em] leading-none transition-colors duration-300 mb-1 group-hover:text-slate-900 dark:group-hover:text-white">
                 {stat.label}
               </p>
+              <h3 className="text-[32px] font-black text-slate-900 dark:text-white leading-none tracking-tighter transition-colors duration-300 group-hover:scale-105 origin-left">
+                {stat.value}
+              </h3>
             </div>
           </div>
         ))}

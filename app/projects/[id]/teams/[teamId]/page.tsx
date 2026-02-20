@@ -87,7 +87,7 @@ export default async function TeamDashboardPage({
                         </div>
                     </div>
                     <p className="text-[15px] text-gray-600 dark:text-slate-400 leading-relaxed font-medium uppercase tracking-tight italic opacity-60">
-                        {team.description || 'Dedicated to specialized delivery and core workspace objectives.'}
+                        {team.description || 'Dedicated to specialized delivery and core workspace tasks.'}
                     </p>
                 </div>
 
@@ -105,7 +105,7 @@ export default async function TeamDashboardPage({
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-[18px] font-black text-gray-900 dark:text-slate-50 leading-none">{stats.completed}</p>
-                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">Resolved</p>
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">Completed</p>
                         </div>
                         <div>
                             <p className="text-[18px] font-black text-gray-900 dark:text-slate-50 leading-none">{stats.total}</p>

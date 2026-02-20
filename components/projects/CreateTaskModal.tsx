@@ -158,7 +158,7 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
                     </div>
                     <h3 className="text-lg font-black text-gray-900 dark:text-slate-50 uppercase tracking-tight">Task Created</h3>
                     <p className="mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        Objective logged successfully
+                        Task logged successfully
                     </p>
                 </div>
             ) : (
@@ -180,7 +180,7 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-900 dark:text-slate-100 placeholder:font-medium"
-                                placeholder="Mission objective..."
+                                placeholder="Mission task..."
                             />
                         </div>
 

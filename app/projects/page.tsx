@@ -79,35 +79,47 @@ export default function ProjectsPage() {
             <Link
               key={project.id}
               href={`/projects/${project.id}`}
-              className="group bg-white dark:bg-slate-900/40 rounded-3xl border border-gray-100 dark:border-slate-800/50 shadow-sm hover:shadow-2xl hover:border-[#6366f1]/30 dark:hover:border-[#6366f1]/40 transition-all p-6 relative overflow-hidden flex flex-col h-full backdrop-blur-xl"
+              className="group bg-white dark:bg-slate-900/40 rounded-[40px] border border-gray-100 dark:border-slate-800/50 shadow-sm hover:shadow-2xl transition-all duration-500 p-8 relative overflow-hidden flex flex-col h-full backdrop-blur-xl"
             >
-              {/* Background Accent */}
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#6366f1]/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
+              {/* Full-Card Hover Fill Background */}
+              <div className="absolute inset-0 bg-[#6366f1] opacity-0 group-hover:opacity-[0.12] transition-opacity duration-500" />
 
               <div className="relative z-10 flex grow flex-col">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-slate-800/50 flex items-center justify-center text-[#6366f1] group-hover:bg-[#6366f1] group-hover:text-white transition-colors duration-300">
-                    <FolderKanban size={24} />
+                <div className="flex items-center gap-6 mb-8">
+                  <div className="w-16 h-16 rounded-[24px] bg-gray-50 dark:bg-slate-800/50 flex items-center justify-center text-[#6366f1] group-hover:bg-[#6366f1] group-hover:text-white group-hover:scale-110 transition-all duration-500 shadow-sm border border-transparent group-hover:border-[#6366f1]/20">
+                    <FolderKanban size={32} />
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${project.project_members?.[0]?.role === 'admin' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                    }`}>
-                    {project.project_members?.[0]?.role || 'Member'}
-                  </span>
+                  <div>
+                    <h3 className="text-[20px] font-black text-gray-900 dark:text-slate-50 leading-tight tracking-tightest group-hover:text-[#6366f1] transition-colors uppercase">
+                      {project.name}
+                    </h3>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${project.project_members?.[0]?.role === 'admin'
+                        ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                        : 'bg-indigo-50 dark:bg-indigo-500/10 text-[#6366f1] dark:text-[#6366f1]'
+                        }`}>
+                        {project.project_members?.[0]?.role || 'Member'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2 truncate group-hover:text-[#6366f1] transition-colors">{project.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-slate-500 line-clamp-2 mb-8 grow">{project.description || 'No description provided.'}</p>
+                <p className="text-[14px] text-gray-500 dark:text-slate-500 line-clamp-2 mb-8 grow font-medium italic opacity-80 leading-relaxed uppercase tracking-tight">
+                  {project.description || 'Dedicated workspace for mission-critical objectives and delivery.'}
+                </p>
 
                 <div className="pt-6 border-t border-gray-50 dark:border-slate-800/50 flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-4 text-xs text-gray-400 font-medium">
+                  <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-gray-400">
                     <span className="flex items-center gap-1.5">
-                      <Clock size={14} /> {project.created_at ? format(new Date(project.created_at), 'MMM dd') : 'N/A'}
+                      <Clock size={14} className="opacity-50" /> {project.created_at ? format(new Date(project.created_at), 'MMM dd') : 'N/A'}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <Layout size={14} /> Active
+                      <Layout size={14} className="opacity-50" /> Active
                     </span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-300 group-hover:text-[#6366f1] group-hover:translate-x-1 transition-all" />
+                  <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-gray-300 group-hover:text-[#6366f1] group-hover:bg-[#6366f1]/10 transition-all">
+                    <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
               </div>
             </Link>
