@@ -31,12 +31,14 @@ export function TeamActions() {
 
     return (
         <>
-            <button
-                onClick={() => setIsTeamModalOpen(true)}
-                className="px-5 py-2.5 bg-[#f3f4ff] text-[#6366f1] rounded-2xl font-bold text-sm hover:bg-[#e8e9ff] transition-all flex items-center gap-2"
-            >
-                <Plus size={18} /> Team
-            </button>
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => setIsTeamModalOpen(true)}
+                    className="px-4 py-2 bg-[#0077B6] text-white rounded-xl text-[13px] font-black flex items-center gap-2 hover:bg-[#0096C7] transition-all shadow-lg shadow-blue-600/20 active:scale-95 uppercase tracking-widest"
+                >
+                    <Plus size={16} className="stroke-[3px]" /> Team
+                </button>
+            </div>
             {/* <CreateTeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} /> */}
         </>
     )
@@ -61,7 +63,7 @@ export function SectionDropdown() {
                     <button className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-[#f3f4ff] hover:text-[#6366f1] transition-colors">
                         Refresh Data
                     </button>
-                    <div className="h-px bg-gray-50 my-1 mx-2"></div>
+                    <div className="h-px bg-gray-200 dark:bg-slate-700 my-1 mx-2"></div>
                     <button className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-400 hover:bg-gray-50 transition-colors">
                         Settings
                     </button>
@@ -98,24 +100,43 @@ export function TaskPriorityList({ tasks, completedCount, upcomingCount, overdue
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.label}
-                        onClick={() => setActiveTab(tab.label as any)}
-                        className={`py-2.5 px-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all ${activeTab === tab.label
-                            ? 'bg-[#f3f4ff] dark:bg-indigo-500/15 text-[#6366f1] shadow-sm'
-                            : 'bg-gray-50 dark:bg-slate-800/40 text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800'
-                            }`}
-                    >
-                        {tab.count} {tab.label === 'Completed' ? 'resolved' : tab.label}
-                    </button>
-                ))}
+                {tabs.map((tab) => {
+                    const isUpcoming = tab.label === 'Upcoming'
+                    const isOverdue = tab.label === 'Overdue'
+                    const isCompleted = tab.label === 'Completed'
+                    const isActive = activeTab === tab.label
+
+                    let colorStats = ""
+                    if (isUpcoming) {
+                        colorStats = isActive
+                            ? "bg-yellow-400 text-black border-yellow-500 shadow-md"
+                            : "bg-gray-50/50 dark:bg-slate-800/40 text-gray-400 dark:text-slate-500 border-gray-300 dark:border-slate-800 hover:bg-yellow-100 hover:text-black hover:border-yellow-400"
+                    } else if (isOverdue) {
+                        colorStats = isActive
+                            ? "bg-[#ff3232] text-black border-[#d10000] shadow-md"
+                            : "bg-gray-50/50 dark:bg-slate-800/40 text-gray-400 dark:text-slate-500 border-gray-300 dark:border-slate-800 hover:bg-[#ff1818]/80 hover:text-black hover:border-[#ff1818]"
+                    } else if (isCompleted) {
+                        colorStats = isActive
+                            ? "bg-[#00d26a] text-black border-[#00a352] shadow-md"
+                            : "bg-gray-50/50 dark:bg-slate-800/40 text-gray-400 dark:text-slate-500 border-gray-300 dark:border-slate-800 hover:bg-[#00d26a]/80 hover:text-black hover:border-[#00d26a]"
+                    }
+
+                    return (
+                        <button
+                            key={tab.label}
+                            onClick={() => setActiveTab(tab.label as any)}
+                            className={`py-2.5 px-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all border ${colorStats}`}
+                        >
+                            {tab.count} {isCompleted ? 'resolved' : tab.label}
+                        </button>
+                    )
+                })}
             </div>
 
             <div className="space-y-4 min-h-[300px]">
                 {filteredTasks.length > 0 ? filteredTasks.map((task) => (
                     <div key={task.id} className="flex items-start gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="mt-1 w-6 h-6 rounded-xl border-2 border-gray-100 dark:border-slate-800 group-hover:border-[#6366f1] transition-all cursor-pointer flex-shrink-0 bg-white dark:bg-slate-950 flex items-center justify-center shadow-sm">
+                        <div className="mt-1 w-6 h-6 rounded-xl border-2 border-gray-300 dark:border-slate-800 group-hover:border-[#6366f1] transition-all cursor-pointer flex-shrink-0 bg-white dark:bg-slate-950 flex items-center justify-center shadow-sm">
                             <div className="w-2.5 h-2.5 rounded-full bg-transparent group-hover:bg-[#6366f1]/20 transition-all" />
                         </div>
                         <div className="flex-1 min-w-0">
