@@ -85,29 +85,26 @@ export default async function ProjectOverviewPage({
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-32">
-      {/* Header Summary */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[32px] font-black text-gray-900 dark:text-slate-50 tracking-tightest leading-none mb-1.5 uppercase">Project Overview</h1>
-        <p className="text-[10px] font-black text-gray-500 dark:text-slate-500 uppercase tracking-[0.2em] italic">Manage and track project performance.</p>
-        <div className="h-px bg-gray-100 dark:bg-slate-800/50 w-full" />
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-gray-400 dark:text-slate-500">Project Integrity: </span>
+      {/* Vital Status Bar */}
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800/50 pb-8 mt-2">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Project Integrity:</span>
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-black uppercase tracking-widest ${healthScore > 60 ? 'text-emerald-500' : 'text-amber-500'}`}>{statusIndicator}</span>
-              <div className="w-12 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <span className={`text-[10px] font-black uppercase tracking-widest ${healthScore > 60 ? 'text-emerald-500' : 'text-amber-500'}`}>{statusIndicator}</span>
+              <div className="w-16 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all duration-1000 ${healthScore > 60 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                  style={{ width: `${healthScore}%` }}
+                  style={{ width: healthScore + '%' }}
                 />
               </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase">{healthScore}%</span>
+              <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase">{healthScore}%</span>
             </div>
           </div>
-          <div>
-            <span className="text-sm font-bold text-gray-400 dark:text-slate-500">Timeline: </span>
-            <span className="text-sm font-black text-gray-900 dark:text-slate-50 uppercase tracking-widest">Execution Active</span>
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Timeline Phase:</span>
+          <span className="text-[10px] font-black text-gray-900 dark:text-slate-50 uppercase tracking-[0.15em] px-3 py-1 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-100 dark:border-slate-800/50">Execution Active</span>
         </div>
       </div>
 
@@ -141,27 +138,18 @@ export default async function ProjectOverviewPage({
             <Users size={14} className="text-[#6366f1]" /> Team Performance
           </h3>
           <div className="space-y-10">
-            {teamsFormatted.length > 0 ? teamsFormatted.map((t: any) => (
-              <div key={t.name} className="space-y-3">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
-                  <span>{t.name}</span>
-                  <span>{t.progress}%</span>
-                </div>
-                <div className="w-full h-2 bg-gray-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-[#6366f1] to-purple-500 h-full transition-all duration-1000"
-                    style={{ width: `${t.progress}%` }}
-                  />
-                </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
+                <span>FLOW</span>
+                <span>{healthScore}%</span>
               </div>
-            )) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-gray-300 mb-4">
-                  <Users size={24} />
-                </div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Active Members</p>
+              <div className="w-full h-2 bg-gray-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#6366f1] to-purple-500 h-full transition-all duration-1000"
+                  style={{ width: `${healthScore}%` }}
+                />
               </div>
-            )}
+            </div>
           </div>
         </div>
 
