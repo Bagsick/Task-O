@@ -23,7 +23,9 @@ import {
     HelpCircle,
     UserPlus,
     X,
-    Menu
+    Menu,
+    Shield,
+    PieChart
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useSidebar } from './SidebarContext'
@@ -43,6 +45,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const [projectContext, setProjectContext] = useState<{ id: string; name: string; role: string } | null>(null)
+    const [isAdmin, setIsAdmin] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
 
     const projectIdMatch = pathname.match(/\/projects\/([^\/]+)/)
@@ -112,6 +115,17 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                     }
                 }
                 setProjects(projectList)
+            }
+
+            // Check if platform admin
+            const { data: userData } = await supabase
+                .from('users')
+                .select('is_platform_admin')
+                .eq('id', currentUser.id)
+                .single()
+
+            if (userData) {
+                setIsAdmin(userData.is_platform_admin)
             }
         }
 
@@ -300,6 +314,45 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                         <Settings size={18} className={navIconClass(pathname === '/settings')} />
                         {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Settings</span>}
                     </Link>
+
+                    {/* Support */}
+                    <Link
+                        href="/support"
+                        onClick={() => setIsMobileOpen(false)}
+                        className={navLinkClass(pathname.startsWith('/support'))}
+                    >
+                        <HelpCircle size={18} className={navIconClass(pathname.startsWith('/support'))} />
+                        {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Support</span>}
+                    </Link>
+
+                    {/* Admin Panel */}
+                    {isAdmin && (
+                        <div className="pt-4 mt-4 border-t border-gray-200 dark:border-slate-800 space-y-2">
+                            {(!isCollapsed || isMobileOpen) && (
+                                <p className="px-3 text-[9px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
+                                    Admin Panel
+                                </p>
+                            )}
+
+                            <Link
+                                href="/admin/support"
+                                onClick={() => setIsMobileOpen(false)}
+                                className={navLinkClass(pathname.startsWith('/admin/support') && !pathname.includes('analytics'))}
+                            >
+                                <Shield size={18} className={navIconClass(pathname.startsWith('/admin/support') && !pathname.includes('analytics'))} />
+                                {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Support Management</span>}
+                            </Link>
+
+                            <Link
+                                href="/admin/support/analytics"
+                                onClick={() => setIsMobileOpen(false)}
+                                className={navLinkClass(pathname.includes('analytics'))}
+                            >
+                                <PieChart size={18} className={navIconClass(pathname.includes('analytics'))} />
+                                {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Support Analytics</span>}
+                            </Link>
+                        </div>
+                    )}
 
                     {/* Logout */}
                     <button
