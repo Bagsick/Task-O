@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SupportAnalyticsCharts from '@/components/support/SupportAnalyticsCharts'
-import { LayoutDashboard, TrendingUp, AlertTriangle, Users } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, AlertTriangle, Users, Shield } from 'lucide-react'
 
 export default async function SupportAnalyticsPage() {
     const supabase = await createServerSupabaseClient()

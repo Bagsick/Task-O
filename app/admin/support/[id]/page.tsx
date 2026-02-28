@@ -1,10 +1,11 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, User, ExternalLink, Monitor, Calendar, MessageSquare, AlertTriangle, Shield, CheckCircle2, History } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
-import { addSupportComment, updateSupportStatus, updateSupportSeverity } from '@/lib/support/actions'
+import Link from 'next/link'
+import { ArrowLeft, Clock, User, Globe, Info, MessageCircle, FileText, History, Shield } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
+import { addSupportComment } from '@/lib/support/actions'
+import { StatusSelect, SeveritySelect, AdminActionButtons } from '@/components/support/AdminEditorControls'
 
 const statusColors: Record<string, string> = {
     'Open': 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
@@ -14,58 +15,47 @@ const statusColors: Record<string, string> = {
     'Closed': 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500',
 }
 
-export default async function AdminSupportDetail({ params }: { params: { id: string } }) {
+export default async function AdminSupportDetailPage({ params }: { params: { id: string } }) {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
+    // Check if platform admin
     const { data: profile } = await supabase.from('users').select('is_platform_admin').eq('id', user.id).single()
     if (!profile?.is_platform_admin) redirect('/dashboard')
 
-    // Fetch support request
+    // Fetch request details
     const { data: request } = await supabase
         .from('support_requests')
         .select(`
             *,
-            user:user_id (id, full_name, email, avatar_url)
+            user:user_id (full_name, email)
         `)
         .eq('id', params.id)
         .single()
 
-    if (!request) notFound()
+    if (!request) redirect('/admin/support')
 
-    // Fetch all comments (including admin notes)
+    // Fetch comments
     const { data: comments } = await supabase
         .from('support_comments')
         .select(`
             *,
-            user:user_id (id, full_name, avatar_url)
+            user:user_id (full_name, avatar_url)
         `)
         .eq('request_id', params.id)
         .order('created_at', { ascending: true })
 
     // Fetch activity log
-    const { data: activity } = await supabase
+    const { data: timeline } = await supabase
         .from('support_activity_log')
         .select(`
             *,
-            user:user_id (id, full_name)
+            user:user_id (full_name)
         `)
         .eq('request_id', params.id)
         .order('created_at', { ascending: true })
-
-    async function handleStatusChange(formData: FormData) {
-        'use server'
-        const status = formData.get('status') as string
-        await updateSupportStatus(params.id, status)
-    }
-
-    async function handleSeverityChange(formData: FormData) {
-        'use server'
-        const severity = formData.get('severity') as string
-        await updateSupportSeverity(params.id, severity)
-    }
 
     async function handleAdminAction(formData: FormData) {
         'use server'
@@ -105,195 +95,189 @@ export default async function AdminSupportDetail({ params }: { params: { id: str
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                    <form action={handleStatusChange}>
-                        <select
-                            name="status"
-                            defaultValue={request.status}
-                            onBlur={(e) => e.target.form?.requestSubmit()}
-                            className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-xs font-bold text-gray-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0077B6]/10"
-                        >
-                            {Object.keys(statusColors).map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </form>
-                    <form action={handleSeverityChange}>
-                        <select
-                            name="severity"
-                            defaultValue={request.severity}
-                            onBlur={(e) => e.target.form?.requestSubmit()}
-                            className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-xs font-bold text-gray-900 dark:text-white outline-none focus:ring-4 focus:ring-[#0077B6]/10"
-                        >
-                            {['Low', 'Medium', 'High', 'Critical'].map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </form>
-                    <button className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-black rounded-xl transition-all shadow-lg active:scale-95 text-xs">
-                        Mark Resolved
-                    </button>
-                    <button className="px-6 py-3 bg-gray-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white font-black rounded-xl transition-all shadow-lg active:scale-95 text-xs">
-                        Close Request
-                    </button>
+                    <StatusSelect
+                        requestId={params.id}
+                        initialValue={request.status}
+                        statuses={Object.keys(statusColors)}
+                    />
+                    <SeveritySelect
+                        requestId={params.id}
+                        initialValue={request.severity}
+                    />
+                    <AdminActionButtons requestId={params.id} />
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                {/* Left Side: Request Content & Conversation */}
-                <div className="lg:col-span-8 space-y-10">
-                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-8 space-y-10 shadow-sm">
-                        <div>
-                            <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">Description</h3>
-                            <div className="text-gray-900 dark:text-white font-medium whitespace-pre-wrap leading-relaxed">
-                                {request.description}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Left Column: Details & Conversation */}
+                <div className="lg:col-span-2 space-y-10">
+                    {/* User Info & Issue Description */}
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-8 lg:p-10 shadow-sm">
+                        <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-50 dark:border-slate-800/50">
+                            <div className="w-12 h-12 bg-[#0077B6] rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg">
+                                {request.user.full_name[0]}
                             </div>
-                        </div>
-
-                        {request.steps_to_reproduce && (
                             <div>
-                                <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">Steps to Reproduce</h3>
-                                <div className="text-gray-900 dark:text-white font-medium whitespace-pre-wrap leading-relaxed">
-                                    {request.steps_to_reproduce}
-                                </div>
+                                <h3 className="text-lg font-black text-gray-900 dark:text-white">{request.user.full_name}</h3>
+                                <p className="text-sm text-gray-400 dark:text-slate-500 font-medium">{request.user.email}</p>
                             </div>
-                        )}
-
-                        {request.expected_result && (
-                            <div>
-                                <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">Expected Result</h3>
-                                <div className="text-gray-900 dark:text-white font-medium whitespace-pre-wrap leading-relaxed">
-                                    {request.expected_result}
-                                </div>
+                            <div className="ml-auto flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-slate-800/50 rounded-xl text-xs font-bold text-gray-500">
+                                <Clock size={14} />
+                                {format(new Date(request.created_at), 'MMM dd, yyyy HH:mm')}
                             </div>
-                        )}
-
-                        {request.screenshot_url && (
-                            <div>
-                                <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">Screenshot</h3>
-                                <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800">
-                                    <img src={request.screenshot_url} alt="Support" className="w-full h-auto" />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Conversation & Replies */}
-                    <div className="space-y-8">
-                        <div className="flex items-center gap-3">
-                            <MessageSquare className="text-[#0077B6]" size={20} />
-                            <h2 className="text-xl font-black text-gray-900 dark:text-white">Request Timeline & Chat</h2>
                         </div>
 
                         <div className="space-y-6">
-                            {comments?.map((comment) => (
-                                <div key={comment.id} className={`flex gap-4 ${comment.is_admin_note ? 'bg-amber-50/50 dark:bg-amber-900/5 p-4 rounded-3xl border border-amber-100 dark:border-amber-900/20' : ''}`}>
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden ${comment.is_admin_note ? 'bg-amber-500 text-white font-black' : 'bg-gray-100 dark:bg-slate-800'}`}>
-                                        {comment.is_admin_note ? 'AN' : comment.user.avatar_url ? <img src={comment.user.avatar_url} className="w-full h-full object-cover" /> : <User className="text-gray-400" size={20} />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.user.full_name}</span>
-                                            {comment.is_admin_note && <span className="text-[9px] font-black uppercase tracking-widest bg-amber-200 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-md">Admin Note</span>}
-                                            <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">{format(new Date(comment.created_at), 'MMM dd, HH:mm')}</span>
+                            <div className="prose dark:prose-invert max-w-none">
+                                <h4 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                    <FileText size={14} />
+                                    Detailed Description
+                                </h4>
+                                <p className="text-gray-600 dark:text-slate-300 font-medium leading-relaxed bg-gray-50/50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-50 dark:border-slate-800/30">
+                                    {request.description}
+                                </p>
+                            </div>
+
+                            {request.steps_to_reproduce && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Steps to Reproduce</h4>
+                                        <div className="bg-gray-50/30 dark:bg-slate-900/30 p-5 rounded-2xl border border-gray-50 dark:border-slate-800/30 text-xs font-medium text-gray-500 dark:text-slate-400 whitespace-pre-wrap">
+                                            {request.steps_to_reproduce}
                                         </div>
-                                        <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{comment.content}</div>
+                                    </div>
+                                    {request.expected_result && (
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Expected Result</h4>
+                                            <div className="bg-green-50/10 dark:bg-green-500/5 p-5 rounded-2xl border border-green-500/10 text-xs font-medium text-gray-500 dark:text-slate-400 whitespace-pre-wrap">
+                                                {request.expected_result}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Internal Admin Note */}
+                    <div className="bg-amber-50/30 dark:bg-amber-500/5 border border-amber-200/50 dark:border-amber-500/20 rounded-[2.5rem] p-8">
+                        <h3 className="text-sm font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <Shield size={18} />
+                            Internal Admin Notes
+                        </h3>
+                        <form action={handleAdminAction} className="space-y-4">
+                            <textarea
+                                name="admin_note"
+                                rows={3}
+                                className="w-full bg-white dark:bg-slate-900 border border-amber-200/50 dark:border-amber-500/20 rounded-2xl p-6 text-sm outline-none focus:ring-4 focus:ring-amber-500/10 transition-all font-medium text-gray-700 dark:text-slate-300"
+                                placeholder="Add a private note only admins can see..."
+                            />
+                            <div className="flex justify-end">
+                                <button className="px-6 py-3 bg-amber-600 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-amber-600/20 hover:scale-105 active:scale-95 transition-all">
+                                    Save Internal Note
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Conversation & Replies */}
+                    <div className="space-y-6">
+                        <h3 className="text-sm font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-3">
+                            <MessageCircle size={18} />
+                            Communication Pipeline
+                        </h3>
+
+                        <div className="space-y-4">
+                            {comments?.map((comment: any) => (
+                                <div key={comment.id} className={`flex gap-4 ${comment.is_admin_note ? 'bg-amber-50/30 dark:bg-amber-500/5 p-6 rounded-3xl border border-amber-200/50 dark:border-amber-500/20' : ''}`}>
+                                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center font-bold text-gray-400 shrink-0">
+                                        {comment.user.full_name[0]}
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-gray-900 dark:text-white">{comment.user.full_name}</span>
+                                            {comment.is_admin_note && (
+                                                <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest border border-amber-200 px-1.5 py-0.5 rounded-md">ADMIN NOTE</span>
+                                            )}
+                                            <span className="text-[10px] text-gray-400 dark:text-slate-500 font-medium ml-auto">
+                                                {format(new Date(comment.created_at), 'MMM dd, HH:mm')}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{comment.content}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Reply Forms */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-10 border-t border-gray-100 dark:border-slate-800">
-                            {/* Public Reply */}
+                        {/* Public Reply Form */}
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
                             <form action={handlePublicReply} className="space-y-4">
-                                <h3 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Public Reply (User will see)</h3>
                                 <textarea
                                     name="reply"
                                     rows={4}
-                                    placeholder="Type your reply to the user..."
-                                    className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-[#0077B6]/10 text-sm font-medium outline-none transition-all resize-none"
+                                    className="w-full bg-gray-50/50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 text-sm outline-none focus:ring-4 focus:ring-[#0077B6]/10 transition-all font-medium text-gray-700 dark:text-slate-300"
+                                    placeholder="Add a public reply to the user..."
                                 />
-                                <button className="w-full py-4 bg-[#0077B6] text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all">
-                                    Send Reply
-                                </button>
-                            </form>
-
-                            {/* Admin Note */}
-                            <form action={handleAdminAction} className="space-y-4">
-                                <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Internal Admin Note (Private)</h3>
-                                <textarea
-                                    name="admin_note"
-                                    rows={4}
-                                    placeholder="Internal thoughts or status updates..."
-                                    className="w-full px-6 py-4 bg-amber-50/20 dark:bg-amber-900/5 border border-amber-100 dark:border-amber-900/20 rounded-2xl focus:ring-4 focus:ring-amber-500/10 text-sm font-medium outline-none transition-all resize-none"
-                                />
-                                <button className="w-full py-4 bg-amber-500 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all">
-                                    Save Note
-                                </button>
+                                <div className="flex justify-end">
+                                    <button className="px-8 py-4 bg-[#0077B6] text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+                                        Send Reply to User
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side Panel: User & System Info */}
-                <div className="lg:col-span-4 space-y-8">
-                    {/* Reporter Info */}
-                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
-                        <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-6">Reported By</h3>
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500 text-xl font-black">
-                                {request.user.full_name?.[0].toUpperCase()}
-                            </div>
-                            <div>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">{request.user.full_name}</p>
-                                <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{request.user.email}</p>
-                            </div>
+                {/* Right Column: System Info & Activity */}
+                <div className="space-y-10">
+                    {/* System Information */}
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 text-gray-900 dark:text-white">
+                            <Globe size={120} />
                         </div>
-                        <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-slate-800">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <ExternalLink size={12} className="text-gray-400" />
-                                    <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Page URL</p>
+                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                            <Info size={18} />
+                            Logistics & Intel
+                        </h3>
+                        <div className="space-y-6 relative z-10">
+                            {[
+                                { label: 'Location Context', value: request.where_did_it_happen || 'Unknown', icon: Globe },
+                                { label: 'Reference Page', value: request.page_url || 'N/A', isLink: true },
+                                { label: 'Browser Env', value: request.browser_info?.userAgent?.split(' ')[0] + ' ' + request.browser_info?.platform || 'Unknown' },
+                                { label: 'Resolution', value: request.browser_info?.screenResolution || 'Unknown' },
+                            ].map((info, i) => (
+                                <div key={i} className="space-y-1">
+                                    <p className="text-[9px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">{info.label}</p>
+                                    <p className={`text-xs font-bold truncate ${info.isLink ? 'text-[#0077B6] hover:underline cursor-pointer' : 'text-gray-900 dark:text-gray-200'}`}>
+                                        {info.value}
+                                    </p>
                                 </div>
-                                <p className="text-[11px] font-bold text-[#0077B6] truncate">{request.page_url || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Monitor size={12} className="text-gray-400" />
-                                    <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Browser Info</p>
-                                </div>
-                                <div className="text-[10px] font-medium text-gray-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl">
-                                    {request.browser_info ? (
-                                        <pre className="whitespace-pre-wrap">{JSON.stringify(request.browser_info, null, 2)}</pre>
-                                    ) : 'No info captured'}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Calendar size={12} className="text-gray-400" />
-                                    <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Submitted Date</p>
-                                </div>
-                                <p className="text-xs font-bold text-gray-800 dark:text-white">{format(new Date(request.created_at), 'PPP p')}</p>
-                            </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Activity History */}
-                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                            <History className="text-gray-400" size={18} />
-                            <h3 className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Activity Log</h3>
-                        </div>
-                        <div className="space-y-6">
-                            {activity?.map((log, idx) => (
+                    {/* Activity Timeline */}
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                            <History size={18} />
+                            Activity Timeline
+                        </h3>
+                        <div className="space-y-8">
+                            {timeline?.map((log: any, i: number) => (
                                 <div key={log.id} className="relative flex gap-4">
-                                    {idx !== activity.length - 1 && <div className="absolute left-[11px] top-6 w-0.5 h-full bg-gray-50 dark:bg-slate-800" />}
-                                    <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 z-10 flex items-center justify-center">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-[#0077B6]" />
+                                    {i !== timeline.length - 1 && (
+                                        <div className="absolute left-[11px] top-7 bottom-[-20px] w-0.5 bg-gray-50 dark:bg-slate-800/50" />
+                                    )}
+                                    <div className="w-6 h-6 rounded-lg bg-[#0077B6]/10 text-[#0077B6] flex items-center justify-center shrink-0 mt-0.5">
+                                        <Clock size={12} />
                                     </div>
-                                    <div className="pb-4">
-                                        <p className="text-[10px] font-bold text-gray-900 dark:text-white leading-tight">
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] font-bold text-gray-900 dark:text-white">
                                             {log.action}
-                                            {log.to_value && <span className="text-[#0077B6]"> → {log.to_value}</span>}
+                                            {log.to_value && <span className="text-[#0077B6] ml-1">→ {log.to_value}</span>}
                                         </p>
-                                        <p className="text-[9px] font-medium text-gray-500 dark:text-slate-600 mt-1">
-                                            by {log.user.full_name} • {format(new Date(log.created_at), 'MMM dd, HH:mm')}
+                                        <p className="text-[9px] text-gray-400 dark:text-slate-500 font-medium">
+                                            {log.user.full_name} • {format(new Date(log.created_at), 'MMM dd, HH:mm')}
                                         </p>
                                     </div>
                                 </div>

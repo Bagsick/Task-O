@@ -119,6 +119,10 @@ CREATE POLICY "Users can view activity on their own requests"
     (SELECT is_platform_admin FROM public.users WHERE id = auth.uid())
   );
 
+CREATE POLICY "Anyone can insert activity logs for their own actions"
+  ON public.support_activity_log FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
 -- Enable Realtime
 DO $$
 BEGIN
