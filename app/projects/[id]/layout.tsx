@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import ProjectNav from '@/components/projects/ProjectNav'
+import ProjectHeader from '@/components/projects/ProjectHeader'
 
 export default async function ProjectLayout({
     children,
@@ -56,12 +57,7 @@ export default async function ProjectLayout({
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-6 border-b border-gray-100 dark:border-slate-800/60">
-                        <div>
-                            <h1 className="text-[32px] font-black text-gray-900 dark:text-slate-50 tracking-tightest leading-none mb-1.5 uppercase">{project.name}</h1>
-                            <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] italic font-black">
-                                {project.description?.substring(0, 100) || 'WORK CONTENT INFRASTRUCTURE'}
-                            </p>
-                        </div>
+                        <ProjectHeader projectName={project.name} projectDescription={project.description} />
 
                         <ProjectNav projectId={id} role={userRole} />
                     </div>

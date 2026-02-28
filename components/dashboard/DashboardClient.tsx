@@ -109,16 +109,16 @@ export function TaskPriorityList({ tasks, completedCount, upcomingCount, overdue
                     let colorStats = ""
                     if (isUpcoming) {
                         colorStats = isActive
-                            ? "bg-[#00838F] text-black border-[#006064] shadow-md translate-y-[-1px]"
-                            : "bg-[#00838F] text-black border-[#00838F]/50"
+                            ? "bg-[#00838F] text-white border-[#006064] shadow-md translate-y-[-1px]"
+                            : "bg-[#00838F] text-white border-[#00838F]/50"
                     } else if (isOverdue) {
                         colorStats = isActive
-                            ? "bg-[#ff2d2d] text-black border-[#e60000] shadow-md translate-y-[-1px]"
-                            : "bg-[#ff2d2d] text-black border-[#ff2d2d]/50"
+                            ? "bg-[#ff2d2d] text-white border-[#e60000] shadow-md translate-y-[-1px]"
+                            : "bg-[#ff2d2d] text-white border-[#ff2d2d]/50"
                     } else if (isCompleted) {
                         colorStats = isActive
-                            ? "bg-[#00e676] text-black border-[#00c853] shadow-md translate-y-[-1px]"
-                            : "bg-[#00e676] text-black border-[#00e676]/50"
+                            ? "bg-[#00e676] text-white border-[#00c853] shadow-md translate-y-[-1px]"
+                            : "bg-[#00e676] text-white border-[#00e676]/50"
                     }
 
                     return (
