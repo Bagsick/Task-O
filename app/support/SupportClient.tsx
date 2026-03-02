@@ -45,10 +45,10 @@ export default function SupportClient({ requests, user }: { requests: any[], use
                             ?
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                            You haven't submitted any support requests yet.
+                            You haven&apos;t submitted any support requests yet.
                         </h3>
                         <p className="text-gray-500 dark:text-slate-400 max-w-sm">
-                            If you encounter any bugs or have suggestions for improvement, we're here to help!
+                            If you encounter any bugs or have suggestions for improvement, we&apos;re here to help!
                         </p>
                     </div>
                 ) : (
