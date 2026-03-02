@@ -165,7 +165,7 @@ export default async function DashboardPage() {
           <TaskPriorityList
             tasks={tasks || []}
             completedCount={completedCount}
-            pendingCount={upcomingTasks?.length || 0}
+            pendingCount={tasks?.filter(t => t.status !== 'completed' && t.due_date && new Date(t.due_date) >= new Date()).length || 0}
             overdueCount={tasks?.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length || 0}
           />
         </section>
