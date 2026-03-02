@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Users, UserPlus, Shield } from 'lucide-react'
+import Image from 'next/image'
 import Drawer from '@/components/ui/Drawer'
 import TeamAssignmentDrawer from '@/components/teams/TeamAssignmentDrawer'
 
@@ -36,7 +37,13 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, tasks }:
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-gray-400 font-black group-hover:scale-105 transition-transform overflow-hidden border border-gray-100 dark:border-slate-800/50">
                                     {member.user.avatar_url ? (
-                                        <img src={member.user.avatar_url} className="w-full h-full object-cover" alt={member.user.full_name} />
+                                        <Image
+                                            src={member.user.avatar_url}
+                                            alt={member.user.full_name || 'Personnel avatar'}
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
                                         member.user.full_name?.[0] || 'U'
                                     )}

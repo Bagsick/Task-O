@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import Image from 'next/image'
 import {
   Users,
   Bell,
@@ -224,7 +225,15 @@ export default async function DashboardPage() {
                   <SectionDropdown />
                 </div>
                 <div className="w-20 h-20 rounded-[28px] bg-gray-50 dark:bg-slate-800/50 mb-6 flex items-center justify-center text-[#6366f1] text-2xl font-black group-hover:scale-110 transition-transform duration-500 shadow-sm border border-gray-400/40 dark:border-slate-800">
-                  {team.avatar_url ? <img src={team.avatar_url} alt={team.name} className="w-full h-full rounded-[28px] object-cover" /> : team.name[0]}
+                  {team.avatar_url ? (
+                    <Image
+                      src={team.avatar_url}
+                      alt={team.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full rounded-[28px] object-cover"
+                    />
+                  ) : team.name[0]}
                 </div>
                 <h4 className="text-sm sm:text-[15px] md:text-base lg:text-[17px] font-bold text-gray-900 dark:text-slate-100 truncate w-full group-hover:text-[#6366f1] transition-colors px-2">{team.name}</h4>
                 <div className="mt-1 sm:mt-1.5 lg:mt-2 flex flex-col gap-0.5 sm:gap-1">

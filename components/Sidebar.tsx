@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
     Home,
@@ -197,7 +198,13 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                     <div className="flex items-center justify-between">
                         {(!isCollapsed || isMobileOpen) && (
                             <Link href="/dashboard" className="flex items-center gap-3 transition-transform hover:scale-105">
-                                <img src="/task-o.png" alt="Task-O Logo" className="h-10 w-10 object-contain" />
+                                <Image
+                                    src="/task-o.png"
+                                    alt="Task-O Logo"
+                                    width={40}
+                                    height={40}
+                                    className="h-10 w-10 object-contain"
+                                />
                                 <span className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Task-O</span>
                             </Link>
                         )}
@@ -355,7 +362,13 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                     >
                         <div className="w-10 h-10 rounded-xl bg-[#0077B6] overflow-hidden shrink-0 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                             {currentUser.avatar_url ? (
-                                <img src={currentUser.avatar_url} alt={currentUser.full_name} className="w-full h-full object-cover" />
+                                <Image
+                                    src={currentUser.avatar_url}
+                                    alt={currentUser.full_name || 'User avatar'}
+                                    width={40}
+                                    height={40}
+                                    className="w-full h-full object-cover"
+                                />
                             ) : (
                                 currentUser.full_name?.[0] || currentUser.email?.[0]
                             )}

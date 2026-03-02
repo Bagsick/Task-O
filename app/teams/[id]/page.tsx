@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, UserPlus, Settings, Mail, Shield, User as UserIcon } from 'lucide-react'
 import InviteMemberModal from '@/components/teams/InviteMemberModal'
 import MemberManagement from '@/components/teams/MemberManagement'
@@ -90,7 +91,13 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
                                     <div className="flex items-center space-x-4">
                                         <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 overflow-hidden">
                                             {member.users?.avatar_url ? (
-                                                <img src={member.users.avatar_url} alt={member.users.full_name} className="h-full w-full object-cover" />
+                                                <Image
+                                                    src={member.users.avatar_url}
+                                                    alt={member.users.full_name || 'Team member'}
+                                                    width={40}
+                                                    height={40}
+                                                    className="h-full w-full object-cover"
+                                                />
                                             ) : (
                                                 <UserIcon className="h-5 w-5" />
                                             )}

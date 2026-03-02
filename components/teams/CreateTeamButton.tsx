@@ -1,6 +1,7 @@
 'use client'
 
 import { Plus, Users, Layout, Mail, Info, X, Shield, User as UserIcon, Check, ChevronDown, AlertCircle } from 'lucide-react'
+import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { createTeam } from '@/lib/teams/actions'
 import Modal from '@/components/ui/Modal'
@@ -216,7 +217,13 @@ export default function CreateTeamButton({ initialProjectId }: { initialProjectI
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                                                 {member.avatar_url ? (
-                                                    <img src={member.avatar_url} className="w-full h-full object-cover" />
+                                                    <Image
+                                                        src={member.avatar_url}
+                                                        alt={member.full_name || 'Member'}
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 ) : (
                                                     <UserIcon size={14} className="text-gray-400" />
                                                 )}

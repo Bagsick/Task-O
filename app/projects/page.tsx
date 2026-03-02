@@ -4,7 +4,7 @@ import { createClientSupabaseClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Plus, FolderKanban, Clock, Layout, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import CreateProjectModal from '@/components/projects/CreateProjectModal'
 
 export default function ProjectsPage() {
@@ -13,9 +13,7 @@ export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const supabase = createClientSupabaseClient()
 
-  useEffect(() => { fetchProjects() }, [])
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
@@ -26,7 +24,9 @@ export default function ProjectsPage() {
       .order('created_at', { ascending: false })
     setProjects(data || [])
     setLoading(false)
-  }
+  }, [supabase])
+
+  useEffect(() => { fetchProjects() }, [fetchProjects])
 
   if (loading) {
     return (

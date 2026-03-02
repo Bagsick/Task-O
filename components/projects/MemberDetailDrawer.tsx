@@ -3,6 +3,7 @@
 import {
     Shield, Mail, Calendar, Trash2, User, Key, LayoutDashboard, Clock, AlertCircle, CheckCircle2, BarChart3, ChevronRight
 } from 'lucide-react'
+import Image from 'next/image'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -81,7 +82,13 @@ export default function MemberDetailDrawer({
             <div className="flex flex-col items-center text-center space-y-4 pb-6 border-b border-gray-50 dark:border-slate-800/50">
                 <div className="w-24 h-24 rounded-[32px] bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[#6366f1] text-3xl font-black border border-indigo-100 dark:border-indigo-500/20 overflow-hidden shadow-xl">
                     {member.user.avatar_url ? (
-                        <img src={member.user.avatar_url} alt={member.user.full_name || 'Member'} className="w-full h-full object-cover" />
+                        <Image
+                            src={member.user.avatar_url}
+                            alt={member.user.full_name || 'Member'}
+                            width={96}
+                            height={96}
+                            className="w-full h-full object-cover"
+                        />
                     ) : (
                         member.user.full_name?.[0] || 'U'
                     )}
