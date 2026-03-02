@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { MoreVertical, Shield, User as UserIcon, Trash2, Check, X } from 'lucide-react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import ConfirmationModal from '../ui/ConfirmationModal'
@@ -83,7 +84,13 @@ export default function ProjectMembersTable({ members, currentUserRole, projectI
                                         <div className="flex items-center gap-5">
                                             <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 overflow-hidden flex items-center justify-center text-[#6366f1] text-lg font-black shadow-sm">
                                                 {u.avatar_url ? (
-                                                    <img src={u.avatar_url} alt={u.full_name} className="w-full h-full object-cover" />
+                                                    <Image
+                                                        src={u.avatar_url}
+                                                        alt={u.full_name || 'Member'}
+                                                        width={48}
+                                                        height={48}
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 ) : (
                                                     u.full_name?.[0] || u.email?.[0]
                                                 )}

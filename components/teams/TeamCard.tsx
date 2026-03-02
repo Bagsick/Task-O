@@ -1,6 +1,7 @@
 'use client'
 
 import { MoreHorizontal, UserPlus, Edit, Trash2, Users } from 'lucide-react'
+import Image from 'next/image'
 import { useState } from 'react'
 import { deleteTeam } from '@/lib/teams/actions'
 import Link from 'next/link'
@@ -42,7 +43,13 @@ export default function TeamCard({ team, memberCount, isOwner }: TeamCardProps) 
                 <Link href={`/teams/${team.id}`} className="flex items-center space-x-4 flex-1">
                     <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 overflow-hidden">
                         {team.avatar_url ? (
-                            <img src={team.avatar_url} alt={team.name} className="h-full w-full object-cover" />
+                            <Image
+                                src={team.avatar_url}
+                                alt={team.name}
+                                width={48}
+                                height={48}
+                                className="h-full w-full object-cover"
+                            />
                         ) : (
                             <Users className="h-6 w-6" />
                         )}

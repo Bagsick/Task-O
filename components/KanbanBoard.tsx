@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { supabase } from '@/lib/supabase/client'
 import { Calendar, User } from 'lucide-react'
@@ -65,18 +65,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
   const [userRole, setUserRole] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  useEffect(() => {
-    setWinReady(true)
-    fetchUserContext()
-    if (initialTasks) {
-      setTasks(initialTasks)
-      setLoading(false)
-    } else {
-      fetchTasks()
-    }
-  }, [projectId, teamId, userId, initialTasks])
-
-  const fetchUserContext = async () => {
+  const fetchUserContext = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setCurrentUserId(user.id)
@@ -90,9 +79,9 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
         if (member) setUserRole(member.role)
       }
     }
-  }
+  }, [projectId])
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       let query = supabase
         .from('tasks')
@@ -124,7 +113,18 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId, teamId, userId])
+
+  useEffect(() => {
+    setWinReady(true)
+    fetchUserContext()
+    if (initialTasks) {
+      setTasks(initialTasks)
+      setLoading(false)
+    } else {
+      fetchTasks()
+    }
+  }, [projectId, teamId, userId, initialTasks, fetchTasks, fetchUserContext])
 
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result

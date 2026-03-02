@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { CheckCircle, Zap, Users, BarChart3, Calendar, ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import AuthErrorBanner from '@/components/AuthErrorBanner'
@@ -193,7 +194,13 @@ export default function LandingPage() {
           <Link href="/landing" className="flex items-center gap-2 group">
             <div className="w-8 h-8 bg-[#0052CC] rounded-lg flex items-center justify-center transition-all group-hover:scale-105 group-hover:brightness-110"
               style={{ boxShadow: '0 2px 10px rgba(0,82,204,0.3)' }}>
-              <img src="/task-o.png" alt="Task-O" className="h-5 w-5 object-contain" />
+              <Image
+                src="/task-o.png"
+                alt="Task-O"
+                width={20}
+                height={20}
+                className="h-5 w-5 object-contain"
+              />
             </div>
             <span className="font-bold text-gray-900 text-lg tracking-tight">Task-O</span>
           </Link>
@@ -477,7 +484,13 @@ export default function LandingPage() {
             <Link href="/landing" className="flex items-center gap-2">
               <div className="w-7 h-7 bg-[#0052CC] rounded-lg flex items-center justify-center"
                 style={{ boxShadow: '0 2px 8px rgba(0,82,204,0.25)' }}>
-                <img src="/task-o.png" alt="Task-O" className="h-4 w-4 object-contain" />
+                <Image
+                  src="/task-o.png"
+                  alt="Task-O"
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 object-contain"
+                />
               </div>
               <span className="text-sm font-bold text-gray-900">Task-O</span>
             </Link>

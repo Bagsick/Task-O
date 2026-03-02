@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Plus, Users, UserPlus, CheckCircle2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { addTeamMember } from '@/lib/teams/actions'
@@ -91,7 +92,13 @@ export default function TeamAssignmentDrawer({
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-[10px] text-gray-400 font-black border border-gray-100 dark:border-slate-800 overflow-hidden">
                                     {user.avatar_url ? (
-                                        <img src={user.avatar_url} className="w-full h-full object-cover" />
+                                        <Image
+                                            src={user.avatar_url}
+                                            alt={user.full_name || 'User avatar'}
+                                            width={32}
+                                            height={32}
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
                                         user.full_name?.[0] || 'U'
                                     )}

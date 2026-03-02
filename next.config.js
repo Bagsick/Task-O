@@ -2,7 +2,26 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['localhost', 'tasko-vert.vercel.app', 'rhenlobaptwpmbwaurky.supabase.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'rhenlobaptwpmbwaurky.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'tasko-vert.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      }
+    ],
   },
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js']

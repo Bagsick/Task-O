@@ -79,22 +79,22 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
     pendingCount: number,
     overdueCount: number
 }) {
-    const [activeTab, setActiveTab] = useState<'Pending' | 'Overdue' | 'Resolve'>('Pending')
+    const [activeTab, setActiveTab] = useState<'Pending' | 'Overdue' | 'Resolved'>('Pending')
 
     const filteredTasks = tasks.filter(task => {
-        if (activeTab === 'Resolve') return task.status === 'completed'
+        if (activeTab === 'Resolved') return task.status === 'completed'
         if (activeTab === 'Overdue') return task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed'
         if (activeTab === 'Pending') return task.status !== 'completed' && task.due_date && new Date(task.due_date) >= new Date()
         return false
     }).sort((a, b) => {
         if (activeTab === 'Pending') return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    }).slice(0, 4)
+    }).slice(0, 10)
 
     const tabs = [
         { label: 'Pending', count: pendingCount },
         { label: 'Overdue', count: overdueCount },
-        { label: 'Resolve', count: completedCount }
+        { label: 'Resolved', count: completedCount }
     ]
 
     return (
@@ -103,7 +103,7 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
                 {tabs.map((tab) => {
                     const isPending = tab.label === 'Pending'
                     const isOverdue = tab.label === 'Overdue'
-                    const isResolve = tab.label === 'Resolve'
+                    const isResolved = tab.label === 'Resolved'
                     const isActive = activeTab === tab.label
 
                     let colorStats = ""
@@ -115,7 +115,7 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
                         colorStats = isActive
                             ? "bg-[#C2312F] text-white border-[#A62725] shadow-md translate-y-[-1px]"
                             : "bg-[#C2312F] text-white border-[#C2312F]/50 hover:bg-[#D64543]"
-                    } else if (isResolve) {
+                    } else if (isResolved) {
                         colorStats = isActive
                             ? "bg-[#1E9E74] text-white border-[#178561] shadow-md translate-y-[-1px]"
                             : "bg-[#1E9E74] text-white border-[#1E9E74]/50 hover:bg-[#26B889]"

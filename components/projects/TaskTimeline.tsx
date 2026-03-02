@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CheckCircle2, Circle, Clock, MoreVertical, User, AlertCircle, ChevronRight } from 'lucide-react'
+import Image from 'next/image'
 
 interface Task {
     id: string
@@ -88,9 +89,15 @@ export default function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) 
 
                                     <div className="flex items-center justify-between pt-2">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-lg bg-gray-50 dark:bg-slate-900 flex items-center justify-center border border-gray-100 dark:border-slate-800">
+                                            <div className="w-6 h-6 rounded-lg bg-gray-50 dark:bg-slate-900 flex items-center justify-center border border-gray-100 dark:border-slate-800 shrink-0">
                                                 {task.assignee?.avatar_url ? (
-                                                    <img src={task.assignee.avatar_url} alt={task.assignee.full_name || 'Assignee'} className="w-full h-full object-cover rounded-lg" />
+                                                    <Image
+                                                        src={task.assignee.avatar_url}
+                                                        alt={task.assignee.full_name || 'Assignee'}
+                                                        width={24}
+                                                        height={24}
+                                                        className="w-full h-full object-cover rounded-lg"
+                                                    />
                                                 ) : (
                                                     <User size={10} className="text-gray-400" />
                                                 )}

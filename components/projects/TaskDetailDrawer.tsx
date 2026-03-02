@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import {
     Calendar, CheckCircle2, Clock, Circle, AlertCircle, User, Trash2,
     Tag, Layout, MessageSquare, History, AtSign, Send, Paperclip,
@@ -266,7 +267,15 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
                                         {a.type === 'comment' ? (
                                             <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
-                                                {a.user?.avatar_url ? <img src={a.user.avatar_url} className="w-full h-full object-cover" alt={a.user.full_name || 'User avatar'} /> : (a.user?.full_name?.[0] || 'U')}
+                                                {a.user?.avatar_url ? (
+                                                    <Image
+                                                        src={a.user.avatar_url}
+                                                        alt={a.user.full_name || 'User avatar'}
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (a.user?.full_name?.[0] || 'U')}
                                             </div>
                                         ) : <Shield size={14} />}
                                     </div>

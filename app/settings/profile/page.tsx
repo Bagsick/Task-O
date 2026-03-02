@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SettingsForm from '@/components/SettingsForm'
+import Image from 'next/image'
 import { User, Shield, Zap } from 'lucide-react'
 
 export default async function ProfilePage() {
@@ -27,7 +28,13 @@ export default async function ProfilePage() {
                     <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[48px] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                     <div className="relative w-32 h-32 rounded-[44px] bg-slate-900 border border-slate-800 flex items-center justify-center text-4xl font-black text-indigo-400 shadow-2xl overflow-hidden ring-1 ring-white/5">
                         {userProfile?.avatar_url ? (
-                            <img src={userProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                            <Image
+                                src={userProfile.avatar_url}
+                                alt="Avatar"
+                                width={128}
+                                height={128}
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
                             user.email?.[0].toUpperCase()
                         )}

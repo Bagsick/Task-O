@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import AuthErrorBanner from '@/components/AuthErrorBanner'
@@ -230,7 +231,13 @@ export default function LoginPage() {
             className="inline-flex items-center justify-center w-12 h-12 bg-[#0052CC] rounded-xl mb-4 transition-all hover:scale-105 hover:brightness-110"
             style={{ boxShadow: '0 4px 20px rgba(0,82,204,0.35), 0 1px 4px rgba(0,82,204,0.2)' }}
           >
-            <img src="/task-o.png" alt="Task-O" className="h-7 w-7 object-contain" />
+            <Image
+              src="/task-o.png"
+              alt="Task-O"
+              width={28}
+              height={28}
+              className="h-7 w-7 object-contain"
+            />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-gray-500 text-sm mt-1">Sign in to your Task-O account</p>

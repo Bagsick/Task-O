@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { User, Mail, Save, Lock, Bell, Trash2, Shield, Eye, EyeOff, Camera, Upload } from 'lucide-react'
 
@@ -177,7 +178,13 @@ export default function SettingsForm({ user, userProfile }: SettingsFormProps) {
                 <div className="relative">
                   <div className="w-32 h-32 rounded-[40px] bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-2xl dark:shadow-none overflow-hidden flex items-center justify-center text-[#6366f1] text-4xl font-black ring-1 ring-gray-100 dark:ring-slate-700 transition-transform group-hover/avatar:scale-105 duration-500">
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      <Image
+                        src={avatarUrl}
+                        alt="Avatar"
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       fullName?.[0] || user?.email?.[0]
                     )}
