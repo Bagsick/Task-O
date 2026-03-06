@@ -26,7 +26,8 @@ import {
     X,
     Menu,
     Shield,
-    PieChart
+    PieChart,
+    Calendar
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useSidebar } from './SidebarContext'
@@ -310,6 +311,16 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                                 {unreadCount}
                             </span>
                         )}
+                    </Link>
+
+                    {/* Calendar */}
+                    <Link
+                        href="/calendar"
+                        onClick={() => setIsMobileOpen(false)}
+                        className={navLinkClass(pathname === '/calendar')}
+                    >
+                        <Calendar size={18} className={navIconClass(pathname === '/calendar')} />
+                        {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Calendar</span>}
                     </Link>
 
                     {/* Settings */}
