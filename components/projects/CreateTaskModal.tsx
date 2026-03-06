@@ -1,3 +1,4 @@
+'use client'
 import {
     ClipboardList, CheckCircle2, AlertCircle, Layout, Hash, Users, FileText,
     Layers, Tag, Calendar, Clock, Paperclip, ChevronDown, X, Bold, Italic,
