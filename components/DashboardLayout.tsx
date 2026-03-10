@@ -8,6 +8,7 @@ import HeaderActions from '@/components/HeaderActions'
 import { useRouter } from 'next/navigation'
 import { Search, Menu } from 'lucide-react'
 import { useSidebar } from './SidebarContext'
+import GlobalSearch from './GlobalSearch'
 
 export default function DashboardLayout({
   children,
@@ -122,69 +123,8 @@ export default function DashboardLayout({
                 <Menu size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
 
-              {/* ── Search box ──
-                  mobile:  fills available space (flex-1), no fixed width
-                  sm+:     still flex-1 but capped
-                  lg+:     fixed 629px max, flex-shrink-0
-              */}
-              <div
-                className="
-                  relative group
-                  flex-1 lg:flex-shrink-0 lg:flex-initial
-                  h-9 sm:h-10 lg:h-[43px]
-                  min-w-0
-                "
-                style={{
-                  /* On lg+, cap at 629px; on smaller screens let it be fluid */
-                  maxWidth: '100%',
-                }}
-                ref={(el) => {
-                  if (!el) return
-                  const update = () => {
-                    if (window.innerWidth >= 1024) {
-                      el.style.width = '629px'
-                      el.style.maxWidth = 'calc(100% - 180px)'
-                    } else {
-                      el.style.width = 'auto'
-                      el.style.maxWidth = '100%'
-                    }
-                  }
-                  update()
-                  window.addEventListener('resize', update)
-                  return () => window.removeEventListener('resize', update)
-                }}
-              >
-                <span className="
-                  absolute inset-y-0 left-0 pl-3 sm:pl-4
-                  flex items-center pointer-events-none transition-colors
-                  text-gray-400 group-focus-within:text-blue-500
-                  dark:text-slate-500 dark:group-focus-within:text-teal-400
-                ">
-                  <Search size={14} className="sm:w-[15px] sm:h-[15px]" />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="
-                    block w-full h-full
-                    pl-9 sm:pl-11 pr-3 sm:pr-4
-                    rounded-xl sm:rounded-[12px]
-                    border transition-all
-                    text-xs sm:text-sm font-medium
-                    focus:outline-none focus:ring-2
-
-                    bg-blue-50/50 border-blue-100/80
-                    hover:bg-blue-50/70 focus:bg-white/90
-                    text-gray-700 placeholder:text-gray-400
-                    focus:ring-blue-200/60 focus:border-blue-200/80
-
-                    dark:bg-white/[0.05] dark:border-white/[0.07]
-                    dark:hover:bg-white/[0.08] dark:focus:bg-white/[0.08]
-                    dark:text-slate-200 dark:placeholder:text-slate-600
-                    dark:focus:ring-teal-400/25 dark:focus:border-teal-400/30
-                  "
-                />
-              </div>
+              {/* ── Global Search Command Palette ── */}
+              <GlobalSearch />
 
               {/* ── Spacer — only meaningful on lg where search has fixed width ── */}
               <div className="hidden lg:block flex-1 min-w-[16px]" />
