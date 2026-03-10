@@ -46,6 +46,7 @@ export default function ProjectActions({ projectId, isAdmin = false }: ProjectAc
                 {actions.filter(a => a.show).map((action, idx) => (
                     <button
                         key={idx}
+                        id={`tour-${action.label.toLowerCase().replace(/\s+/g, '-')}-btn`}
                         onClick={action.onClick}
                         className={`w-full py-4 bg-gray-50/80 dark:bg-slate-800/50 ${action.color} rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-transparent shadow-sm hover:shadow-lg active:scale-95 flex items-center justify-center gap-3 group`}
                     >

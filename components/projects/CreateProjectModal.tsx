@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import { createProject } from '@/lib/projects/actions'
 import { FolderPlus, CheckCircle2, AlertCircle } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
+import { useGuidedTour } from '@/components/GuidedTour'
 
 export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess?: () => void }) {
     const router = useRouter()
+    const { nextStep, isActive } = useGuidedTour()
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [status, setStatus] = useState('planning')
@@ -39,8 +41,8 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
             setTimeout(() => {
                 setSuccess(false)
                 onClose()
+                if (isActive) nextStep()
                 if (onSuccess) onSuccess()
-                router.push(`/projects/${project.id}`)
             }, 2000)
         } catch (err: any) {
             setError(err.message || 'Something went wrong')
@@ -65,6 +67,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
                         Cancel
                     </button>
                     <button
+                        id="tour-create-project-submit"
                         onClick={handleSubmit}
                         disabled={loading || !name}
                         className="flex-1 py-4 text-[10px] font-black text-[#6366f1] uppercase tracking-[0.2em] hover:bg-gray-50 dark:hover:bg-slate-900 transition-all disabled:opacity-50"
@@ -97,6 +100,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Project Name *</label>
                             <input
+                                id="tour-project-name-input"
                                 autoFocus
                                 required
                                 type="text"
@@ -110,6 +114,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Description</label>
                             <textarea
+                                id="tour-project-description-input"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 className="w-full px-5 py-4 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-[#6366f1]/5 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-600 dark:text-slate-400 h-24 resize-none placeholder:font-medium shadow-inner"
@@ -121,6 +126,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
                                 <input
+                                    id="tour-project-start-date"
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
@@ -130,6 +136,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">End Date</label>
                                 <input
+                                    id="tour-project-end-date"
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
@@ -148,6 +155,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
                                 ].map((item) => (
                                     <button
                                         key={item.id}
+                                        id={`tour-project-status-${item.id}`}
                                         type="button"
                                         onClick={() => setStatus(item.id)}
                                         className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${status === item.id

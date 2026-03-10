@@ -1,46 +1,67 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import { Plus, MoreHorizontal, Calendar, AlertCircle, Layout, CheckCircle2, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
 import dynamic from 'next/dynamic'
 const CreateTaskModal = dynamic(() => import('@/components/projects/CreateTaskModal'), { ssr: false })
-// import CreateTeamModal from '@/components/teams/CreateTeamModal' // To be created
+import CreateTeamModal from '@/components/teams/CreateTeamModal'
 
-export function DashboardActions() {
+// Shared state for Dashboard actions to avoid duplicate modals
+interface DashboardContextType {
+    openTaskModal: () => void
+    openTeamModal: () => void
+}
+
+const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
+
+export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
 
     return (
-        <>
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setIsTaskModalOpen(true)}
-                    className="px-4 py-2 bg-[#0077B6] text-white rounded-xl text-[13px] font-black flex items-center gap-2 hover:bg-[#0096C7] transition-all shadow-lg shadow-blue-600/20 active:scale-95 uppercase tracking-widest"
-                >
-                    <Plus size={16} className="stroke-[3px]" /> Task
-                </button>
-            </div>
+        <DashboardContext.Provider value={{
+            openTaskModal: () => setIsTaskModalOpen(true),
+            openTeamModal: () => setIsTeamModalOpen(true)
+        }}>
+            {children}
             <CreateTaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} />
-        </>
+            <CreateTeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />
+        </DashboardContext.Provider>
+    )
+}
+
+function useDashboard() {
+    const context = useContext(DashboardContext)
+    if (!context) throw new Error('useDashboard must be used within a DashboardProvider')
+    return context
+}
+
+export function DashboardActions() {
+    const { openTaskModal } = useDashboard()
+
+    return (
+        <button
+            id="tour-create-task-btn"
+            onClick={openTaskModal}
+            className="px-4 py-2 bg-[#0077B6] text-white rounded-xl text-[13px] font-black flex items-center gap-2 hover:bg-[#0096C7] transition-all shadow-lg shadow-blue-600/20 active:scale-95 uppercase tracking-widest"
+        >
+            <Plus size={16} className="stroke-[3px]" /> Task
+        </button>
     )
 }
 
 export function TeamActions() {
-    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
+    const { openTeamModal } = useDashboard()
 
     return (
-        <>
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setIsTeamModalOpen(true)}
-                    className="px-4 py-2 bg-[#0077B6] text-white rounded-xl text-[13px] font-black flex items-center gap-2 hover:bg-[#0096C7] transition-all shadow-lg shadow-blue-600/20 active:scale-95 uppercase tracking-widest"
-                >
-                    <Plus size={16} className="stroke-[3px]" /> Team
-                </button>
-            </div>
-            {/* <CreateTeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} /> */}
-        </>
+        <button
+            id="tour-create-team-btn"
+            onClick={openTeamModal}
+            className="px-4 py-2 bg-[#0077B6] text-white rounded-xl text-[13px] font-black flex items-center gap-2 hover:bg-[#0096C7] transition-all shadow-lg shadow-blue-600/20 active:scale-95 uppercase tracking-widest"
+        >
+            <Plus size={16} className="stroke-[3px]" /> Team
+        </button>
     )
 }
 

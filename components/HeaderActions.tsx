@@ -267,6 +267,7 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
             {/* Create Dropdown */}
             <div className="relative" ref={createDropdownRef}>
                 <button
+                    id="tour-create-dropdown"
                     onClick={() => setIsCreateOpen(!isCreateOpen)}
                     className="flex items-center gap-2 bg-[#0077B6] text-white px-3 lg:px-4 py-2.5 rounded-xl hover:bg-[#0096C7] transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
                 >
@@ -277,6 +278,7 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
                 {isCreateOpen && (
                     <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 py-2 z-[100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                         <button
+                            id="tour-new-task-option"
                             onClick={() => {
                                 setIsTaskModalOpen(true)
                                 setIsCreateOpen(false)
@@ -294,6 +296,7 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
                             New Project
                         </Link>
                         <button
+                            id="tour-new-team-option"
                             onClick={() => {
                                 setIsTeamModalOpen(true)
                                 setIsCreateOpen(false)

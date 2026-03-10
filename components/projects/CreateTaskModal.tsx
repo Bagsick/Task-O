@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createTask } from '@/lib/tasks/actions'
 import Modal from '@/components/ui/Modal'
 import { supabase } from '@/lib/supabase/client'
+import { useGuidedTour } from '@/components/GuidedTour'
 
 export default function CreateTaskModal({ isOpen, onClose, initialProjectId, initialTeamId, onSuccess }: { isOpen: boolean, onClose: () => void, initialProjectId?: string, initialTeamId?: string, onSuccess?: () => void }) {
     const [title, setTitle] = useState('')
@@ -22,6 +23,7 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
     const [teams, setTeams] = useState<any[]>([])
     const [selectedTeamId, setSelectedTeamId] = useState(initialTeamId || '')
     const [members, setMembers] = useState<any[]>([])
+    const { nextStep, isActive, startTour } = useGuidedTour()
     const [userRole, setUserRole] = useState<string>('viewer')
     const [userTeams, setUserTeams] = useState<string[]>([])
     const [status, setStatus] = useState('pending')
@@ -50,7 +52,7 @@ role,
         const projectList = projectData?.map((p: any) => p.projects).filter(Boolean) || []
         setProjects(projectList)
 
-        const currentProjectRole = projectData?.find((p: any) => p.projects.id === (projectId || initialProjectId))?.role || 'viewer'
+        const currentProjectRole = projectData?.find((p: any) => p.projects?.id === (projectId || initialProjectId))?.role || 'viewer'
         setUserRole(currentProjectRole)
 
         if (projectList.length > 0 && !projectId && !initialProjectId) {
@@ -158,6 +160,7 @@ users: user_id(
             setTimeout(() => {
                 setSuccess(false)
                 onClose()
+                if (isActive) nextStep()
                 if (onSuccess) onSuccess()
             }, 2000)
         } catch (err: any) {
@@ -202,6 +205,7 @@ users: user_id(
                     </button>
                     {!noProjects && (
                         <button
+                            id="tour-create-task-submit"
                             onClick={handleSubmit}
                             disabled={loading || !title || !projectId}
                             className="flex-1 py-4 text-[10px] font-black text-[#6366f1] uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-slate-900 transition-all disabled:opacity-50"
@@ -232,8 +236,12 @@ users: user_id(
                         Missions require a project context. Create one first to begin tasking.
                     </p>
                     <Link
+                        id="tour-task-no-projects-link"
                         href="/projects"
-                        onClick={onClose}
+                        onClick={() => {
+                            onClose()
+                            startTour('create-project')
+                        }}
                         className="inline-flex items-center gap-2 px-8 py-3 bg-[#6366f1] text-white text-[10px] font-black rounded-xl hover:bg-[#5558e3] transition-all shadow-lg shadow-indigo-500/20 active:scale-95 uppercase tracking-[0.2em]"
                     >
                         <Plus size={14} strokeWidth={2.5} /> Create My First Project
@@ -252,6 +260,7 @@ users: user_id(
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Title *</label>
                             <input
+                                id="tour-task-title-input"
                                 autoFocus
                                 required
                                 type="text"
@@ -267,6 +276,7 @@ users: user_id(
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team</label>
                                 <div className="relative group">
                                     <select
+                                        id="tour-task-team-select"
                                         value={selectedTeamId}
                                         onChange={(e) => setSelectedTeamId(e.target.value)}
                                         disabled={userRole === 'tech_lead' && userTeams.length === 1}
@@ -276,8 +286,8 @@ users: user_id(
                                         {teams.filter(t => {
                                             if (userRole === 'tech_lead') return userTeams.includes(t.id)
                                             return true
-                                        }).map(t => (
-                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        }).map((t, index) => (
+                                            <option key={`${t.id}-${index}`} value={t.id}>{t.name}</option>
                                         ))}
                                     </select>
                                     <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -288,6 +298,7 @@ users: user_id(
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Assignee *</label>
                                 <div className="relative group">
                                     <select
+                                        id="tour-task-assignee-select"
                                         required
                                         value={assignedMemberIds[0] || ''}
                                         onChange={(e) => setAssignedMemberIds(e.target.value ? [e.target.value] : [])}
@@ -295,8 +306,8 @@ users: user_id(
                                         className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-900 dark:text-slate-100 appearance-none disabled:opacity-50"
                                     >
                                         <option value="">Select a member...</option>
-                                        {members.map(m => (
-                                            <option key={m.id} value={m.id}>{m.full_name || m.email}</option>
+                                        {members.map((m, index) => (
+                                            <option key={`${m.id}-${index}`} value={m.id}>{m.full_name || m.email}</option>
                                         ))}
                                     </select>
                                     <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -309,6 +320,7 @@ users: user_id(
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
                                 <div className="relative group">
                                     <select
+                                        id="tour-task-status-select"
                                         value={status}
                                         onChange={(e) => setStatus(e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-xs font-bold text-gray-900 dark:text-slate-100 appearance-none"
@@ -325,6 +337,7 @@ users: user_id(
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Priority</label>
                                 <div className="relative group">
                                     <select
+                                        id="tour-task-priority-select"
                                         value={priority}
                                         onChange={(e) => setPriority(e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-xs font-bold text-gray-900 dark:text-slate-100 appearance-none"
@@ -342,6 +355,7 @@ users: user_id(
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Due Date</label>
                                 <input
+                                    id="tour-task-due-date"
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
@@ -352,6 +366,7 @@ users: user_id(
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Due Time</label>
                                 <input
+                                    id="tour-task-due-time"
                                     type="time"
                                     value={dueTime}
                                     onChange={(e) => setDueTime(e.target.value)}
@@ -366,14 +381,15 @@ users: user_id(
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Project</label>
                                 <div className="relative group">
                                     <select
+                                        id="tour-task-project-select"
                                         required
                                         value={projectId}
                                         onChange={(e) => setProjectId(e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-xs font-bold text-gray-900 dark:text-slate-100 appearance-none"
                                     >
                                         <option value="">Select Project...</option>
-                                        {projects.map(p => (
-                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        {projects.map((p, index) => (
+                                            <option key={`${p.id}-${index}`} value={p.id}>{p.name}</option>
                                         ))}
                                     </select>
                                     <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -384,6 +400,7 @@ users: user_id(
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Description</label>
                             <textarea
+                                id="tour-task-description-input"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-[13px] font-bold text-gray-600 dark:text-slate-400 h-20 resize-none placeholder:font-medium"
