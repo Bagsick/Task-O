@@ -7,6 +7,7 @@ import { createTeam } from '@/lib/teams/actions'
 import Modal from '@/components/ui/Modal'
 import { supabase } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { useGuidedTour } from '@/components/GuidedTour'
 
 interface CreateTeamModalProps {
     isOpen: boolean
@@ -23,6 +24,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
     const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
     const [invitationEmails, setInvitationEmails] = useState('')
     const [memberLoading, setMemberLoading] = useState(false)
+    const { nextStep, isActive, startTour } = useGuidedTour()
 
     const [projects, setProjects] = useState<any[]>([])
     const [allMembers, setAllMembers] = useState<any[]>([])
@@ -104,6 +106,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
             )
             onClose()
             resetForm()
+            if (isActive) nextStep()
             if (onSuccess) onSuccess()
         } catch (error: any) {
             setError(error.message || 'An error occurred')
@@ -155,6 +158,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
                     </button>
                     {!noProjects && (
                         <button
+                            id="tour-create-team-submit"
                             onClick={handleSubmit}
                             disabled={loading || !name}
                             className="flex-1 py-4 text-[10px] font-black text-[#6366f1] uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-slate-900 transition-all disabled:opacity-50"
@@ -183,8 +187,12 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
                             You need a project to house your team. Create one first to get started.
                         </p>
                         <Link
+                            id="tour-team-no-projects-link"
                             href="/projects"
-                            onClick={onClose}
+                            onClick={() => {
+                                onClose()
+                                startTour('create-project')
+                            }}
                             className="inline-flex items-center gap-2 px-8 py-3 bg-[#6366f1] text-white text-[10px] font-black rounded-xl hover:bg-[#5558e3] transition-all shadow-lg shadow-indigo-500/20 active:scale-95 uppercase tracking-[0.2em]"
                         >
                             <Plus size={14} strokeWidth={2.5} /> Create My First Project
@@ -195,6 +203,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team Name *</label>
                             <input
+                                id="tour-team-name-input"
                                 autoFocus
                                 required
                                 type="text"
@@ -209,6 +218,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Parent Project</label>
                             <div className="relative group">
                                 <select
+                                    id="tour-team-parent-project"
                                     required
                                     value={projectId}
                                     onChange={(e) => setProjectId(e.target.value)}
@@ -226,6 +236,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team Lead</label>
                             <div className="relative group">
                                 <select
+                                    id="tour-team-lead"
                                     value={leadId}
                                     onChange={(e) => setLeadId(e.target.value)}
                                     className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-900 dark:text-slate-100 appearance-none"
@@ -281,8 +292,9 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
                         )}
 
                         <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Mission Description</label>
+                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team Description</label>
                             <textarea
+                                id="tour-team-description-input"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 className="w-full px-5 py-4 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-600 dark:text-slate-400 h-24 resize-none"

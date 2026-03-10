@@ -7,9 +7,11 @@ import {
     ChevronRight,
     MessageSquare,
     Send,
-    LifeBuoy
+    LifeBuoy,
+    Play
 } from 'lucide-react'
 import CreateSupportRequestModal from '@/components/support/CreateSupportRequestModal'
+import TutorialModal from '@/components/TutorialModal'
 
 interface HelpSupportClientProps {
     user: any
@@ -17,6 +19,7 @@ interface HelpSupportClientProps {
 
 export default function HelpSupportClient({ user }: HelpSupportClientProps) {
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false)
 
     return (
         <DashboardLayout>
@@ -28,7 +31,7 @@ export default function HelpSupportClient({ user }: HelpSupportClientProps) {
                             <p className="text-xs text-gray-400 dark:text-slate-500 font-bold uppercase tracking-[0.2em]">We&apos;re here to help you succeed</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                             <div className="p-8 rounded-[32px] border border-gray-300 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/20 hover:border-orange-200 dark:hover:border-orange-500/30 transition-all">
                                 <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center text-orange-500 mb-6">
                                     <MessageSquare size={24} />
@@ -48,6 +51,20 @@ export default function HelpSupportClient({ user }: HelpSupportClientProps) {
                                 <p className="text-xs text-gray-500 dark:text-slate-400 font-medium leading-relaxed mb-6">Browse our comprehensive guides and FAQs to find quick answers to common questions.</p>
                                 <button className="text-[10px] font-black uppercase tracking-widest text-[#0077B6] flex items-center gap-2 hover:gap-3 transition-all">
                                     Visit Knowledge Base <ChevronRight size={14} />
+                                </button>
+                            </div>
+
+                            <div className="p-8 rounded-[32px] border border-gray-300 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/20 hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-6">
+                                    <Play size={24} />
+                                </div>
+                                <h3 className="text-lg font-black text-gray-900 dark:text-white mb-3">Quick Tutorial</h3>
+                                <p className="text-xs text-gray-500 dark:text-slate-400 font-medium leading-relaxed mb-6">New to Task-O? Take a quick interactive tour to learn the essentials of our platform.</p>
+                                <button
+                                    onClick={() => setIsTutorialOpen(true)}
+                                    className="text-[10px] font-black uppercase tracking-widest text-[#0077B6] flex items-center gap-2 hover:gap-3 transition-all"
+                                >
+                                    Start Tour <ChevronRight size={14} />
                                 </button>
                             </div>
                         </div>
@@ -74,6 +91,11 @@ export default function HelpSupportClient({ user }: HelpSupportClientProps) {
             <CreateSupportRequestModal
                 isOpen={isSupportModalOpen}
                 onClose={() => setIsSupportModalOpen(false)}
+            />
+
+            <TutorialModal
+                isOpen={isTutorialOpen}
+                onClose={() => setIsTutorialOpen(false)}
             />
         </DashboardLayout>
     )

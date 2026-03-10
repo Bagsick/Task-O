@@ -54,6 +54,7 @@ export default function ProjectsPage() {
             </p>
           </div>
           <button
+            id="tour-create-project-btn"
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-[#0077B6] hover:bg-[#0096C7] text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-900/30 active:scale-95 text-[12px] font-black uppercase tracking-widest"
           >
@@ -90,7 +91,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       </div>
       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">No projects yet</h3>
       <p className="text-slate-500 text-sm text-center max-w-xs mb-6">Get started by creating your first project.</p>
-      <button onClick={onNew} className="px-5 py-2.5 bg-[#0077B6] hover:bg-[#0096C7] text-white rounded-xl transition-all text-[12px] font-black uppercase tracking-widest active:scale-95 shadow-lg shadow-blue-500/20">
+      <button id="tour-create-project-btn" onClick={onNew} className="px-5 py-2.5 bg-[#0077B6] hover:bg-[#0096C7] text-white rounded-xl transition-all text-[12px] font-black uppercase tracking-widest active:scale-95 shadow-lg shadow-blue-500/20">
         Create First Project
       </button>
     </div>
@@ -114,6 +115,7 @@ function ProjectCard({ project }: { project: any }) {
 
   return (
     <Link
+      id="tour-project-card"
       href={`/projects/${project.id}`}
       className="group flex flex-col justify-between
                  h-[148px]

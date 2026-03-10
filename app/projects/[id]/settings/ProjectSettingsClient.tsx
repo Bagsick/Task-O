@@ -156,9 +156,9 @@ export default function ProjectSettingsClient({ project }: ProjectSettingsClient
                         <h3 className="text-[18px] font-black text-red-500 uppercase tracking-tightest mb-8">Danger Zone</h3>
                         <div className="p-10 border-2 border-dashed border-red-100 dark:border-red-500/20 bg-red-50/30 dark:bg-red-500/5 rounded-[32px] space-y-8">
                             <div>
-                                <h4 className="text-[13px] font-black text-red-900 dark:text-red-400 uppercase tracking-widest mb-2">Nuclear Deletion</h4>
+                                <h4 className="text-[13px] font-black text-red-900 dark:text-red-400 uppercase tracking-widest mb-2">Project Deletion</h4>
                                 <p className="text-[11px] text-red-700 dark:text-red-400/60 leading-relaxed font-bold italic">
-                                    All telemetry, tasks, and historical records for this project will be permanently purged. This action is terminal and non-reversible.
+                                    All data, tasks, and historical records for this project will be permanently removed. This action is irreversible.
                                 </p>
                             </div>
                             <DeleteProjectButton projectId={project.id} />

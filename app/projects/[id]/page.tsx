@@ -89,7 +89,7 @@ export default async function ProjectOverviewPage({
       {/* Vital Status Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-300 dark:border-slate-800 pb-6 md:pb-8 mt-2">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
+          <div id="tour-project-integrity" className="flex items-center gap-3">
             <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Project Integrity:</span>
             <div className="flex items-center gap-2">
               <span className={`text-[10px] font-black uppercase tracking-widest ${healthScore > 60 ? 'text-emerald-500' : 'text-amber-500'}`}>{statusIndicator}</span>
@@ -110,7 +110,7 @@ export default async function ProjectOverviewPage({
       </div>
 
       {/* KPI Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      <div id="tour-project-kpis" className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         <div className="bg-white dark:bg-slate-900/40 p-4 md:p-8 rounded-[30px] md:rounded-[40px] border border-gray-300 dark:border-slate-800 shadow-sm backdrop-blur-xl group hover:border-[#6366f1]/20 transition-all">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Total Tasks</p>
           <h3 className="text-2xl md:text-[32px] font-black text-gray-900 dark:text-slate-50 tracking-tightest leading-none">{totalTasks}</h3>

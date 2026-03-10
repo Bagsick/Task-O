@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { SidebarProvider } from '@/components/SidebarContext'
+import { GuidedTourProvider } from '@/components/GuidedTour'
 
 export default function RootLayout({
   children,
@@ -21,11 +22,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SidebarProvider>
-            {children}
-          </SidebarProvider>
-        </ThemeProvider>
+        <GuidedTourProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SidebarProvider>
+              {children}
+            </SidebarProvider>
+          </ThemeProvider>
+        </GuidedTourProvider>
       </body>
     </html>
   )

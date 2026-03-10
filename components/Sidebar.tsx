@@ -27,10 +27,12 @@ import {
     Menu,
     Shield,
     PieChart,
-    Calendar
+    Calendar,
+    Play
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useSidebar } from './SidebarContext'
+import TutorialModal from './TutorialModal'
 
 interface SidebarProps {
     currentUser: {
@@ -46,6 +48,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
     const router = useRouter()
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
     const [isProfileOpen, setIsProfileOpen] = useState(false)
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false)
     const [projectContext, setProjectContext] = useState<{ id: string; name: string; role: string } | null>(null)
     const [isAdmin, setIsAdmin] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
@@ -245,6 +248,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
 
                     {/* Home */}
                     <Link
+                        id="sidebar-home"
                         href="/dashboard"
                         onClick={() => setIsMobileOpen(false)}
                         className={navLinkClass(pathname === '/dashboard')}
@@ -257,6 +261,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                     <div className="space-y-1">
                         <div className="flex items-center group">
                             <Link
+                                id="sidebar-projects"
                                 href="/projects"
                                 onClick={() => setIsMobileOpen(false)}
                                 className={`flex-1 ${navLinkClass(pathname.startsWith('/projects') && !currentProjectId)}`}
@@ -342,6 +347,18 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                         <HelpCircle size={18} className={navIconClass(pathname.startsWith('/support'))} />
                         {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Support</span>}
                     </Link>
+
+                    {/* Tutorial */}
+                    <button
+                        onClick={() => {
+                            setIsMobileOpen(false)
+                            setIsTutorialOpen(true)
+                        }}
+                        className={`w-full ${navLinkClass(isTutorialOpen)}`}
+                    >
+                        <Play size={18} className={navIconClass(isTutorialOpen)} />
+                        {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest text-left">Tutorial</span>}
+                    </button>
 
                     {/* Admin Panel */}
                     {isAdmin && (
@@ -451,6 +468,8 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                 </div>
 
             </aside>
+
+            <TutorialModal isOpen={isTutorialOpen} onClose={() => setIsTutorialOpen(false)} />
         </>
     )
 }
