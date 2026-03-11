@@ -13,13 +13,16 @@ import {
     Play,
     Users2,
     Briefcase,
-    UserPlus
+    UserPlus,
+    Check
 } from 'lucide-react'
 import { useGuidedTour } from '@/components/GuidedTour'
 
 interface TutorialModalProps {
     isOpen: boolean
     onClose: () => void
+    isDismissed: boolean
+    onToggleDismissal: (value: boolean) => void
 }
 
 const slides = [
@@ -61,7 +64,7 @@ const slides = [
     }
 ]
 
-export default function TutorialModal({ isOpen, onClose }: TutorialModalProps) {
+export default function TutorialModal({ isOpen, onClose, isDismissed, onToggleDismissal }: TutorialModalProps) {
     const [currentSlide, setCurrentSlide] = useState(0)
     const [selectedTour, setSelectedTour] = useState<string | null>(null)
     const [showPrompt, setShowPrompt] = useState(false)
@@ -123,6 +126,36 @@ export default function TutorialModal({ isOpen, onClose }: TutorialModalProps) {
                     <p className="text-sm text-gray-500 dark:text-slate-400 font-medium leading-relaxed mb-10 min-h-[60px]">
                         {slides[currentSlide].description}
                     </p>
+
+                    {currentSlide === 0 && (
+                        <div className="flex items-center justify-center gap-3 mb-8 animate-in slide-in-from-top-4 duration-500 delay-300">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        checked={isDismissed}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            onToggleDismissal(checked);
+                                            if (checked) {
+                                                // Auto-close with a slight delay so they see the checkmark
+                                                setTimeout(() => {
+                                                    handleClose();
+                                                }, 3000);
+                                            }
+                                        }}
+                                        className="sr-only"
+                                    />
+                                    <div className={`w-6 h-6 rounded-lg border-2 transition-all duration-300 flex items-center justify-center ${isDismissed ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-transparent border-gray-300 dark:border-slate-700 group-hover:border-emerald-500'}`}>
+                                        <Check size={16} className={`text-white transition-all duration-300 ${isDismissed ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} strokeWidth={4} />
+                                    </div>
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                                    Mark tutorial as done
+                                </span>
+                            </label>
+                        </div>
+                    )}
 
                     {currentSlide === slides.length - 1 ? (
                         <div className="flex flex-col items-center mb-8">

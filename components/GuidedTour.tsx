@@ -598,7 +598,7 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
 
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [currentStep, nextStep])
+    }, [currentStep, nextStep, isTargetFilled])
 
     // Auto-focus next target when step changes
     useEffect(() => {
@@ -635,7 +635,7 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
             }, 5000)
             return () => clearTimeout(timer)
         }
-    }, [currentStepIndex, activeTourId])
+    }, [currentStepIndex, activeTourId, currentStep?.placement, endTour])
 
 
     const getTooltipStyle = () => {

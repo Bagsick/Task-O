@@ -258,9 +258,8 @@ export default async function DashboardPage() {
             )}
           </div>
         </section>
-
-        <ScrollSuggestion />
       </div>
+      <ScrollSuggestion />
     </DashboardProvider>
   )
 }

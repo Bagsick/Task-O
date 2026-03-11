@@ -20,6 +20,7 @@ interface HelpSupportClientProps {
 export default function HelpSupportClient({ user }: HelpSupportClientProps) {
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
     const [isTutorialOpen, setIsTutorialOpen] = useState(false)
+    const [showTutorialGlow, setShowTutorialGlow] = useState(false)
 
     return (
         <DashboardLayout>
@@ -96,6 +97,11 @@ export default function HelpSupportClient({ user }: HelpSupportClientProps) {
             <TutorialModal
                 isOpen={isTutorialOpen}
                 onClose={() => setIsTutorialOpen(false)}
+                isDismissed={!showTutorialGlow}
+                onToggleDismissal={(checked) => {
+                    localStorage.setItem('tutorialDismissed', checked ? 'true' : 'false')
+                    setShowTutorialGlow(!checked)
+                }}
             />
         </DashboardLayout>
     )

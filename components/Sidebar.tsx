@@ -49,6 +49,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const [isTutorialOpen, setIsTutorialOpen] = useState(false)
+    const [showTutorialGlow, setShowTutorialGlow] = useState(false)
     const [projectContext, setProjectContext] = useState<{ id: string; name: string; role: string } | null>(null)
     const [isAdmin, setIsAdmin] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
@@ -178,6 +179,23 @@ export default function Sidebar({ currentUser }: SidebarProps) {
 
         return () => { supabase.removeChannel(channel) }
     }, [currentUser?.id])
+
+    // Auto-trigger tutorial for new users
+    useEffect(() => {
+        if (pathname === '/dashboard') {
+            const hasSeen = localStorage.getItem('hasSeenTutorial')
+            if (!hasSeen) {
+                setIsTutorialOpen(true)
+                localStorage.setItem('hasSeenTutorial', 'true')
+            }
+        }
+    }, [pathname])
+
+    // Load tutorial glow state
+    useEffect(() => {
+        const isDismissed = localStorage.getItem('tutorialDismissed') === 'true'
+        setShowTutorialGlow(!isDismissed)
+    }, [])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -357,7 +375,17 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                         className={`w-full ${navLinkClass(isTutorialOpen)}`}
                     >
                         <Play size={18} className={navIconClass(isTutorialOpen)} />
-                        {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest text-left">Tutorial</span>}
+                        {(!isCollapsed || isMobileOpen) && (
+                            <div className="flex flex-1 items-center justify-between">
+                                <span className="text-[11px] uppercase tracking-widest text-left">Tutorial</span>
+                                {showTutorialGlow && (
+                                    <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-annoying-glow shadow-[0_0_10px_rgba(239,68,68,0.5)] ring-2 ring-white dark:ring-slate-900 mr-1.5"></span>
+                                )}
+                            </div>
+                        )}
+                        {isCollapsed && !isMobileOpen && showTutorialGlow && (
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-annoying-glow shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+                        )}
                     </button>
 
                     {/* Admin Panel */}
@@ -469,7 +497,15 @@ export default function Sidebar({ currentUser }: SidebarProps) {
 
             </aside>
 
-            <TutorialModal isOpen={isTutorialOpen} onClose={() => setIsTutorialOpen(false)} />
+            <TutorialModal
+                isOpen={isTutorialOpen}
+                onClose={() => setIsTutorialOpen(false)}
+                isDismissed={!showTutorialGlow}
+                onToggleDismissal={(checked) => {
+                    localStorage.setItem('tutorialDismissed', checked ? 'true' : 'false');
+                    setShowTutorialGlow(!checked);
+                }}
+            />
         </>
     )
 }
