@@ -337,10 +337,10 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
         }
 
         const checkValue = () => {
-            const element = document.getElementById(currentStep.targetId) as HTMLInputElement | HTMLTextAreaElement
+            const element = document.getElementById(currentStep.targetId) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
             const isInput = currentStep.action === 'input'
 
-            if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')) {
+            if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT')) {
                 setIsTargetFilled(element.value.trim().length > 0)
             } else {
                 // If it's an input step but element not found, it's NOT filled
@@ -490,10 +490,11 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
             const element = document.getElementById(currentStep.targetId) ||
                 (currentStep.fallbackTargetId ? document.getElementById(currentStep.fallbackTargetId) : null)
 
-            if (element) {
+            if (element && document.activeElement !== element) {
                 if (element instanceof HTMLInputElement ||
                     element instanceof HTMLTextAreaElement ||
-                    element instanceof HTMLButtonElement) {
+                    element instanceof HTMLButtonElement ||
+                    element instanceof HTMLSelectElement) {
                     element.focus()
                     if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
                         element.select()
@@ -505,9 +506,9 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
         // Small delay to allow for page transitions or modal animations
         const timer = setTimeout(focusTarget, 150)
         return () => clearTimeout(timer)
-    }, [currentStepIndex, activeTourId])
+    }, [currentStepIndex, activeTourId, currentStep])
 
-    const startTour = (tourId: string) => {
+    const startTour = useCallback((tourId: string) => {
         // Clear any pending fade out to prevent the new tour from closing immediately
         if (fadeTimeoutRef.current) {
             clearTimeout(fadeTimeoutRef.current)
@@ -527,9 +528,9 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
         setCurrentStepIndex(startIndex)
         localStorage.setItem('activeTour', tourId)
         localStorage.setItem('activeTourStep', startIndex.toString())
-    }
+    }, [pathname])
 
-    const endTour = () => {
+    const endTour = useCallback(() => {
         setIsFading(true)
         fadeTimeoutRef.current = setTimeout(() => {
             setActiveTourId(null)
@@ -539,7 +540,7 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
             localStorage.removeItem('activeTour')
             localStorage.removeItem('activeTourStep')
         }, 500)
-    }
+    }, [])
 
     // Auto-fade timer for 'center' placement
     useEffect(() => {
@@ -596,8 +597,16 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
         return { top, left }
     }
 
+    const contextValue = React.useMemo(() => ({
+        startTour,
+        endTour,
+        nextStep,
+        currentStep: currentStepIndex,
+        isActive: !!activeTourId
+    }), [startTour, endTour, nextStep, currentStepIndex, activeTourId])
+
     return (
-        <GuidedTourContext.Provider value={{ startTour, endTour, nextStep, currentStep: currentStepIndex, isActive: !!activeTourId }}>
+        <GuidedTourContext.Provider value={contextValue}>
             {children}
             {activeTourId && tourSteps[currentStepIndex] && (() => {
                 const step = tourSteps[currentStepIndex];
