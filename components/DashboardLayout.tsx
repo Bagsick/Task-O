@@ -38,6 +38,28 @@ export default function DashboardLayout({
     getUser()
   }, [router])
 
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const input = document.getElementById('dashboard-search-input') as HTMLInputElement
+      if (input && input === document.activeElement && !input.contains(event.target as Node)) {
+        input.blur()
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault()
+        const input = document.getElementById('dashboard-search-input') as HTMLInputElement
+        if (input) input.focus()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   if (!user) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
@@ -157,17 +179,18 @@ export default function DashboardLayout({
                 <span className="
                   absolute inset-y-0 left-0 pl-3 sm:pl-4
                   flex items-center pointer-events-none transition-colors
-                  text-gray-400 group-focus-within:text-blue-500
-                  dark:text-slate-500 dark:group-focus-within:text-teal-400
+                  text-[#6366f1] group-focus-within:text-blue-500
+                  dark:text-teal-500 dark:group-focus-within:text-teal-400
                 ">
                   <Search size={14} className="sm:w-[15px] sm:h-[15px]" />
                 </span>
                 <input
+                  id="dashboard-search-input"
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search missions, boards, teams..."
                   className="
                     block w-full h-full
-                    pl-9 sm:pl-11 pr-3 sm:pr-4
+                    pl-9 sm:pl-11 pr-12 sm:pr-14
                     rounded-xl sm:rounded-[12px]
                     border transition-all
                     text-xs sm:text-sm font-medium
@@ -184,6 +207,12 @@ export default function DashboardLayout({
                     dark:focus:ring-teal-400/25 dark:focus:border-teal-400/30
                   "
                 />
+                <div className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center pointer-events-none transition-opacity duration-300">
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm text-[11px] font-black text-gray-400 dark:text-slate-500 tracking-tight">
+                    <span className="text-[13px] opacity-70">⌘</span>
+                    <span className="mt-0.5">K</span>
+                  </div>
+                </div>
               </div>
 
               {/* ── Spacer — only meaningful on lg where search has fixed width ── */}
