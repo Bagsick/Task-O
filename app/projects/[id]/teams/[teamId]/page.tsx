@@ -177,7 +177,7 @@ export default async function TeamDashboardPage({
 
                     <div className="pt-6 border-t border-gray-50 dark:border-slate-800/50">
                         <Link
-                            href={`/projects/${projectId}/kanban`}
+                            href={`/projects/${projectId}/kanban?teamId=${teamId}`}
                             className="flex items-center justify-center gap-2 w-full py-4 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-indigo-100 dark:border-indigo-500/20 shadow-sm"
                         >
                             Access Full Operational Board <ChevronRight size={14} />

@@ -9,6 +9,7 @@ import { Plus, Search, Filter } from 'lucide-react'
 
 interface ProjectKanbanClientProps {
     projectId: string
+    initialTeamId?: string
 }
 
 interface Team {
@@ -16,10 +17,10 @@ interface Team {
     name: string
 }
 
-export default function ProjectKanbanClient({ projectId }: ProjectKanbanClientProps) {
+export default function ProjectKanbanClient({ projectId, initialTeamId }: ProjectKanbanClientProps) {
     const [user, setUser] = useState<any>(null)
     const [teams, setTeams] = useState<any[]>([])
-    const [selectedTeam, setSelectedTeam] = useState<string | undefined>(undefined)
+    const [selectedTeam, setSelectedTeam] = useState<string | undefined>(initialTeamId)
     const [canManage, setCanManage] = useState(false)
     const [tasks, setTasks] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
