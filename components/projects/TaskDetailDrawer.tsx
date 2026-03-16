@@ -117,6 +117,21 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
         }
     }
 
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this mission?')) return
+        setLoading(true)
+        try {
+            await deleteTask(task.id)
+            onClose()
+            router.refresh()
+        } catch (error: any) {
+            console.error('Failed to delete task:', error)
+            alert(error.message || 'Failed to delete task')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleCommentSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!newComment.trim()) return
@@ -293,6 +308,20 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     </div>
                 </div>
             </div>
+
+            {/* Admin Actions */}
+            {(userRole === 'admin' || userRole === 'manager') && (
+                <div className="px-8 py-4 border-t border-gray-50 dark:border-slate-800/50 flex justify-center">
+                    <button
+                        onClick={handleDelete}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-widest disabled:opacity-50"
+                    >
+                        <Trash2 size={14} />
+                        Terminate Mission
+                    </button>
+                </div>
+            )}
 
             {/* Bottom Action Bar */}
             <div className="p-8 border-t border-gray-50 dark:border-slate-800/50 relative shrink-0 flex">

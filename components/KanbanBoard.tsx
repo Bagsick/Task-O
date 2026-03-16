@@ -85,6 +85,17 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
 
   const fetchTasks = useCallback(async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Fetch teams the user is a member of
+      const { data: userTeams } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', user.id)
+
+      const userTeamIds = userTeams?.map(ut => ut.team_id) || []
+
       let query = supabase
         .from('tasks')
         .select(`
@@ -105,6 +116,14 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
         query = query.eq('team_id', teamId)
       } else if (userId) {
         query = query.eq('assigned_to', userId)
+      }
+
+      // Final visibility filter: If on any teams, see all tasks for those teams.
+      // If NOT on any teams, see only tasks assigned to them.
+      if (userTeamIds.length > 0) {
+        query = query.or(`team_id.in.(${userTeamIds.join(',')}),assigned_to.eq.${user.id}`)
+      } else {
+        query = query.eq('assigned_to', user.id)
       }
 
       const { data, error } = await query
@@ -268,14 +287,14 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
                         <Draggable key={task.id} draggableId={task.id} index={index}>
                           {(provided, snapshot) => (
                             <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                id={task.id}
-                                className={`group bg-white dark:bg-slate-950 p-6 rounded-[28px] shadow-sm ${getPriorityColor(
-                                  task.priority
-                                )} ${snapshot.isDragging ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-[#6366f1]/20' : ''} border border-gray-100 dark:border-slate-800 transition-all hover:border-[#6366f1]/30 cursor-pointer`}
-                                onClick={() => task.id !== 'tutorial-ghost-task' && setSelectedTask(task)}
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              id={task.id}
+                              className={`group bg-white dark:bg-slate-950 p-6 rounded-[28px] shadow-sm ${getPriorityColor(
+                                task.priority
+                              )} ${snapshot.isDragging ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-[#6366f1]/20' : ''} border border-gray-100 dark:border-slate-800 transition-all hover:border-[#6366f1]/30 cursor-pointer`}
+                              onClick={() => task.id !== 'tutorial-ghost-task' && setSelectedTask(task)}
                             >
                               <div className="flex flex-col gap-3">
                                 <h4 className="text-[14px] font-black text-gray-900 dark:text-slate-100 mb-1 leading-tight group-hover:text-[#6366f1] transition-colors uppercase tracking-tightest">
