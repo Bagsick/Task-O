@@ -59,7 +59,6 @@ BEGIN
   END IF;
 END $$;
 
--- Security helper functions to break RLS recursion
 CREATE OR REPLACE FUNCTION public.check_team_membership(t_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -69,7 +68,7 @@ BEGIN
     AND user_id = auth.uid()
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.check_team_role(t_id UUID, required_roles TEXT[])
 RETURNS BOOLEAN AS $$
@@ -81,7 +80,7 @@ BEGIN
     AND role = ANY(required_roles)
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Enable RLS
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
@@ -156,11 +155,13 @@ CREATE TRIGGER on_team_invitation
   AFTER INSERT ON public.team_invitations
   FOR EACH ROW EXECUTE FUNCTION public.handle_team_invitation();
 
--- RLS Policies for team_members
 DROP POLICY IF EXISTS "Members can view other members of their teams" ON public.team_members;
 CREATE POLICY "Members can view other members of their teams"
   ON public.team_members FOR SELECT
-  USING (public.check_team_membership(team_id));
+  USING (
+    user_id = auth.uid() OR
+    public.check_team_membership(team_id)
+  );
 
 DROP POLICY IF EXISTS "Owners and admins can manage members" ON public.team_members;
 CREATE POLICY "Owners and admins can manage members"
@@ -219,10 +220,11 @@ CREATE TRIGGER update_teams_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Update projects RLS to include team access
-DROP POLICY IF EXISTS "Users can view their own projects" ON public.projects;
+DROP POLICY IF EXISTS "Users can view their own projects or team projects" ON public.projects;
 CREATE POLICY "Users can view their own projects or team projects"
   ON public.projects FOR SELECT
+  TO authenticated
   USING (
     auth.uid() = owner_id OR
-    (team_id IS NOT NULL AND auth.uid() IN (SELECT user_id FROM public.team_members WHERE team_id = public.projects.team_id))
+    (team_id IS NOT NULL AND public.check_team_membership(team_id))
   );
