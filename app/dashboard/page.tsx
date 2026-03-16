@@ -251,9 +251,9 @@ export default async function DashboardPage() {
                 </div>
               )
             }) : (
-              <div className="col-span-full py-12 sm:py-16 lg:py-20 text-center bg-[#fcfcfd] rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-dashed border-gray-200 px-4">
-                <Users size={32} className="sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-200 mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-gray-400 font-bold">You aren&apos;t a member of any teams yet.</p>
+              <div className="col-span-full py-12 sm:py-16 lg:py-20 text-center bg-[#fcfcfd] dark:bg-slate-800/50 rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-dashed border-gray-200 dark:border-slate-700 px-4">
+                <Users size={32} className="sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-200 dark:text-slate-700 mx-auto mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base text-gray-400 dark:text-slate-500 font-bold">You aren&apos;t a member of any teams yet.</p>
               </div>
             )}
           </div>
