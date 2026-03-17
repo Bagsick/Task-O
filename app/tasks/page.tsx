@@ -13,7 +13,15 @@ export default async function TasksPage() {
     return null
   }
 
-  const { data: tasks } = await supabase
+  // Fetch teams the user is a member of
+  const { data: userTeams } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('user_id', user.id)
+
+  const userTeamIds = userTeams?.map(ut => ut.team_id) || []
+
+  let query = supabase
     .from('tasks')
     .select(`
       *,
@@ -27,7 +35,14 @@ export default async function TasksPage() {
         email
       )
     `)
-    .eq('assigned_to', user.id)
+
+  if (userTeamIds.length > 0) {
+    query = query.or(`team_id.in.(${userTeamIds.join(',')}),assigned_to.eq.${user.id}`)
+  } else {
+    query = query.eq('assigned_to', user.id)
+  }
+
+  const { data: tasks } = await query
     .order('created_at', { ascending: false })
 
   return (

@@ -154,7 +154,7 @@ export async function deleteTeam(id: string) {
     revalidatePath('/teams')
 }
 
-export async function inviteMember(teamId: string, email: string, role: 'admin' | 'member') {
+export async function inviteMember(teamId: string, email: string, role: 'admin' | 'editor' | 'member' | 'viewer') {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -187,7 +187,7 @@ export async function inviteMember(teamId: string, email: string, role: 'admin' 
     revalidatePath(`/teams/${teamId}`)
 }
 
-export async function addTeamMember(teamId: string, userId: string, role: 'admin' | 'member' = 'member') {
+export async function addTeamMember(teamId: string, userId: string, role: 'admin' | 'editor' | 'member' | 'viewer' = 'member') {
     const supabase = await createServerSupabaseClient()
     const { data: { user: currentUser } } = await supabase.auth.getUser()
 
@@ -247,7 +247,7 @@ export async function removeMember(teamId: string, userId: string) {
     revalidatePath(`/teams/${teamId}`)
 }
 
-export async function updateMemberRole(teamId: string, userId: string, role: 'admin' | 'member') {
+export async function updateMemberRole(teamId: string, userId: string, role: 'admin' | 'editor' | 'member' | 'viewer') {
     const supabase = await createServerSupabaseClient()
     const { data: { user: currentUser } } = await supabase.auth.getUser()
 

@@ -7,10 +7,10 @@ import { useState } from 'react'
 interface MemberManagementProps {
     member: {
         user_id: string
-        role: 'owner' | 'admin' | 'member'
+        role: 'owner' | 'admin' | 'editor' | 'member' | 'viewer'
         team_id: string
     }
-    currentUserRole: 'owner' | 'admin' | 'member'
+    currentUserRole: 'owner' | 'admin' | 'editor' | 'member' | 'viewer'
     isCurrentUser: boolean
 }
 
@@ -38,7 +38,7 @@ export default function MemberManagement({ member, currentUserRole, isCurrentUse
         }
     }
 
-    const handleRoleChange = async (newRole: 'admin' | 'member') => {
+    const handleRoleChange = async (newRole: 'admin' | 'editor' | 'member' | 'viewer') => {
         try {
             await updateMemberRole(member.team_id, member.user_id, newRole)
             setIsOpen(false)
@@ -62,15 +62,18 @@ export default function MemberManagement({ member, currentUserRole, isCurrentUse
                     <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-20 overflow-hidden">
                         {currentUserRole === 'owner' && (
-                            <>
-                                <button
-                                    onClick={() => handleRoleChange(member.role === 'admin' ? 'member' : 'admin')}
-                                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                                >
-                                    <UserCog className="h-4 w-4 mr-3" />
-                                    Make {member.role === 'admin' ? 'Member' : 'Admin'}
-                                </button>
-                            </>
+                            <div className="py-1">
+                                {(['admin', 'editor', 'member', 'viewer'] as const).map((role) => (
+                                    <button
+                                        key={role}
+                                        onClick={() => handleRoleChange(role)}
+                                        className={`w-full text-left px-4 py-2 text-sm flex items-center ${member.role === role ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    >
+                                        <UserCog className="h-4 w-4 mr-3" />
+                                        Make {role.charAt(0).toUpperCase() + role.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
                         )}
                         <button
                             onClick={handleRemove}

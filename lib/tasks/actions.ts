@@ -54,6 +54,20 @@ export async function createTask(data: {
         if (!isTeamMember) throw new Error('Tech Leads can only assign tasks to their own team members')
     }
 
+    // Member/Editor validation: must be in the team if team_id is provided
+    if (data.team_id) {
+        const { data: isTeamMember } = await supabase
+            .from('team_members')
+            .select('role')
+            .eq('team_id', data.team_id)
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+        if (!isTeamMember) throw new Error('You must be a member of the team to create tasks for it')
+
+        if (isTeamMember.role === 'viewer') throw new Error('Viewers cannot create tasks')
+    }
+
     // Member validation: can only assign to themselves
     if (role === 'member' && data.assigned_to && data.assigned_to !== user.id) {
         throw new Error('Members can only assign tasks to themselves')
@@ -123,9 +137,23 @@ export async function updateTask(taskId: string, data: any) {
 
     const role = member?.role || 'viewer'
 
+    // 1b. Get team role if applicable
+    let teamRole = 'viewer'
+    if (originalTask.team_id) {
+        const { data: teamMember } = await supabase
+            .from('team_members')
+            .select('role')
+            .eq('team_id', originalTask.team_id)
+            .eq('user_id', user.id)
+            .maybeSingle()
+        if (teamMember) teamRole = teamMember.role
+    }
+
     // 2. Permission enforcement
     if (role === 'admin' || role === 'manager') {
         // Full access
+    } else if (teamRole === 'owner' || teamRole === 'admin' || teamRole === 'editor') {
+        // Team-level full access (Editor can override even if not assigned)
     } else if (role === 'tech_lead') {
         // Must check if task belongs to one of their teams
         const { data: leadTeams } = await supabase
@@ -149,7 +177,7 @@ export async function updateTask(taskId: string, data: any) {
 
             if (!isTeamMember) throw new Error('Tech Leads can only assign within their teams')
         }
-    } else if (role === 'member') {
+    } else if (role === 'member' || teamRole === 'member') {
         // Can only edit if assigned to them
         if (originalTask.assigned_to !== user.id) {
             throw new Error('Members can only edit tasks assigned to them')
@@ -262,8 +290,8 @@ export async function deleteTask(taskId: string) {
             .eq('user_id', user.id)
             .single()
 
-        if (member?.role !== 'admin' && member?.role !== 'manager') {
-            throw new Error('Only Admins or Managers can delete tasks')
+        if (member?.role !== 'admin' && member?.role !== 'manager' && member?.role !== 'tech_lead') {
+            throw new Error('Only Project Admins, Managers, or Tech Leads can delete tasks. Team members cannot delete tasks.')
         }
     }
 

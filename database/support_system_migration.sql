@@ -45,18 +45,14 @@ CREATE TABLE IF NOT EXISTS public.support_activity_log (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Function to generate ticket_id (SUP-XXXX)
+-- 4. Sequence for ticket_id
+CREATE SEQUENCE IF NOT EXISTS public.support_ticket_id_seq START WITH 1000;
+
+-- 5. Function to generate ticket_id (SUP-XXXX)
 CREATE OR REPLACE FUNCTION generate_ticket_id() 
 RETURNS TRIGGER AS $$
-DECLARE
-  new_ticket_id TEXT;
-  seq_val BIGINT;
 BEGIN
-  -- We'll use a sequence if it exists, or just a random number for simplicity in this migration
-  -- In a production app, a sequence is better for sequential IDs
-  seq_val := (SELECT count(*) + 1000 FROM public.support_requests);
-  new_ticket_id := 'SUP-' || seq_val;
-  NEW.ticket_id := new_ticket_id;
+  NEW.ticket_id := 'SUP-' || nextval('public.support_ticket_id_seq');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -81,29 +77,39 @@ ALTER TABLE public.support_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_activity_log ENABLE ROW LEVEL SECURITY;
 
 -- Support Requests
+DROP POLICY IF EXISTS "Users can view their own support requests" ON public.support_requests;
 CREATE POLICY "Users can view their own support requests"
   ON public.support_requests FOR SELECT
+  TO authenticated
   USING (auth.uid() = user_id OR (SELECT is_platform_admin FROM public.users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Users can insert their own support requests" ON public.support_requests;
 CREATE POLICY "Users can insert their own support requests"
   ON public.support_requests FOR INSERT
+  TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can update all support requests" ON public.support_requests;
 CREATE POLICY "Admins can update all support requests"
   ON public.support_requests FOR UPDATE
+  TO authenticated
   USING ((SELECT is_platform_admin FROM public.users WHERE id = auth.uid()));
 
 -- Support Comments
+DROP POLICY IF EXISTS "Users can view comments on their own requests" ON public.support_comments;
 CREATE POLICY "Users can view comments on their own requests"
   ON public.support_comments FOR SELECT
+  TO authenticated
   USING (
     EXISTS (SELECT 1 FROM public.support_requests WHERE id = request_id AND user_id = auth.uid()) 
     OR 
     (SELECT is_platform_admin FROM public.users WHERE id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Users can insert comments on their own requests" ON public.support_comments;
 CREATE POLICY "Users can insert comments on their own requests"
   ON public.support_comments FOR INSERT
+  TO authenticated
   WITH CHECK (
     EXISTS (SELECT 1 FROM public.support_requests WHERE id = request_id AND user_id = auth.uid()) 
     OR 
@@ -111,16 +117,20 @@ CREATE POLICY "Users can insert comments on their own requests"
   );
 
 -- Support Activity Log
+DROP POLICY IF EXISTS "Users can view activity on their own requests" ON public.support_activity_log;
 CREATE POLICY "Users can view activity on their own requests"
   ON public.support_activity_log FOR SELECT
+  TO authenticated
   USING (
     EXISTS (SELECT 1 FROM public.support_requests WHERE id = request_id AND user_id = auth.uid()) 
     OR 
     (SELECT is_platform_admin FROM public.users WHERE id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Anyone can insert activity logs for their own actions" ON public.support_activity_log;
 CREATE POLICY "Anyone can insert activity logs for their own actions"
   ON public.support_activity_log FOR INSERT
+  TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
 -- Enable Realtime

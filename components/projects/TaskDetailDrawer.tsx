@@ -11,6 +11,7 @@ import { updateTask, deleteTask } from '@/lib/tasks/actions'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { format } from 'date-fns'
+import ConfirmationModal from '../ui/ConfirmationModal'
 
 interface TaskDetailDrawerProps {
     task: any
@@ -36,6 +37,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     const [showMentions, setShowMentions] = useState(false)
     const [projectMembers, setProjectMembers] = useState<any[]>([])
     const [teamInfo, setTeamInfo] = useState<any>(null)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -112,6 +114,20 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
             router.refresh()
         } catch (error) {
             console.error('Failed to update task:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        setLoading(true)
+        try {
+            await deleteTask(task.id)
+            onClose()
+            router.refresh()
+        } catch (error: any) {
+            console.error('Failed to delete task:', error)
+            alert(error.message || 'Failed to delete task')
         } finally {
             setLoading(false)
         }
@@ -293,6 +309,30 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     </div>
                 </div>
             </div>
+
+            {/* Admin Actions */}
+            {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead') && (
+                <div className="px-8 py-4 border-t border-gray-50 dark:border-slate-800/50 flex justify-center">
+                    <button
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-widest disabled:opacity-50"
+                    >
+                        <Trash2 size={14} />
+                        Delete Task
+                    </button>
+                </div>
+            )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                title="Delete Task"
+                message="Are you sure you want to delete this task? This action cannot be undone."
+                confirmLabel="Delete Mission"
+                type="danger"
+            />
 
             {/* Bottom Action Bar */}
             <div className="p-8 border-t border-gray-50 dark:border-slate-800/50 relative shrink-0 flex">

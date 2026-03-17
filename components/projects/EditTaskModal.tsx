@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { CheckCircle2, AlertCircle, Trash2, Calendar, User, Clock, Tag, ChevronDown } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
+import { deleteTask } from '@/lib/tasks/actions'
 
 interface Task {
     id: string
@@ -38,6 +39,7 @@ export default function EditTaskModal({ isOpen, onClose, task, onUpdate }: EditT
     const [loading, setLoading] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [userRole, setUserRole] = useState<string>('viewer')
 
     const fetchMembers = useCallback(async () => {
         const { data } = await supabase
@@ -66,6 +68,21 @@ export default function EditTaskModal({ isOpen, onClose, task, onUpdate }: EditT
             setTaskTag(task.task_tag || '')
             setAssignedTo(task.assigned_to || '')
             fetchMembers()
+
+            // Fetch current user role
+            supabase.auth.getUser().then(({ data: { user } }) => {
+                if (user) {
+                    supabase
+                        .from('project_members')
+                        .select('role')
+                        .eq('project_id', task.project_id)
+                        .eq('user_id', user.id)
+                        .single()
+                        .then(({ data }) => {
+                            setUserRole(data?.role || 'viewer')
+                        })
+                }
+            })
         }
     }, [isOpen, task, fetchMembers])
 
@@ -106,12 +123,7 @@ export default function EditTaskModal({ isOpen, onClose, task, onUpdate }: EditT
         setDeleting(true)
         setError(null)
         try {
-            const { error: deleteError } = await supabase
-                .from('tasks')
-                .delete()
-                .eq('id', task.id)
-
-            if (deleteError) throw deleteError
+            await deleteTask(task.id)
 
             if (onUpdate) onUpdate()
             onClose()
@@ -240,17 +252,19 @@ export default function EditTaskModal({ isOpen, onClose, task, onUpdate }: EditT
                     </div>
                 </div>
 
-                <div className="pt-4 flex justify-center">
-                    <button
-                        type="button"
-                        onClick={handleDelete}
-                        disabled={deleting}
-                        className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-widest disabled:opacity-50"
-                    >
-                        <Trash2 size={14} />
-                        Delete Task
-                    </button>
-                </div>
+                {(userRole === 'admin' || userRole === 'manager') && (
+                    <div className="pt-4 flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-widest disabled:opacity-50"
+                        >
+                            <Trash2 size={14} />
+                            Delete Task
+                        </button>
+                    </div>
+                )}
             </div>
         </Modal>
     )

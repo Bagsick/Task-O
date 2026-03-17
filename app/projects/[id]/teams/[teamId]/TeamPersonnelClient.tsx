@@ -66,7 +66,7 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner,
                         <div key={member.id} className="flex items-center justify-between group">
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-gray-400 font-black group-hover:scale-105 transition-transform overflow-hidden border border-gray-100 dark:border-slate-800/50">
-                                    {member.user.avatar_url ? (
+                                    {member.user?.avatar_url ? (
                                         <Image
                                             src={member.user.avatar_url}
                                             alt={member.user.full_name || 'Personnel avatar'}
@@ -75,11 +75,11 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner,
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        member.user.full_name?.[0] || 'U'
+                                        member.user?.full_name?.[0] || 'U'
                                     )}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-black text-gray-900 dark:text-slate-100">{member.user.full_name}</p>
+                                    <p className="text-sm font-black text-gray-900 dark:text-slate-100">{member.user?.full_name || 'Anonymous'}</p>
                                     <div className="flex items-center gap-3">
                                         <p className="text-[10px] font-black text-gray-400 capitalize flex items-center gap-1">
                                             <Shield size={10} className={member.role === 'admin' ? 'text-indigo-500' : 'text-gray-300'} />
@@ -87,7 +87,7 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner,
                                         </p>
                                         <div className="h-1 w-1 rounded-full bg-gray-300" />
                                         <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">
-                                            {tasks.filter(t => t.assigned_to === member.user.id && (t.status === 'in_progress' || t.status === 'review')).length} Active
+                                            {tasks.filter(t => t.assigned_to === member.user?.id && (t.status === 'in_progress' || t.status === 'review')).length} Active
                                         </p>
                                     </div>
                                 </div>

@@ -21,9 +21,10 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     const results: SearchResult[] = []
 
     // 1. Search Projects
+    // Using !inner ensures that we only get projects where the project itself matches the search query
     const { data: projects } = await supabase
         .from('project_members')
-        .select('projects(id, name, status)')
+        .select('projects!inner(id, name, status)')
         .eq('user_id', user.id)
         .ilike('projects.name', `%${query}%`)
         .limit(5)
@@ -48,7 +49,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
         .select('id, title, status, project_id')
         .or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`)
         .ilike('title', `%${query}%`)
-        .limit(5)
+        .limit(10) // Increased limit for tasks
 
     if (tasks) {
         tasks.forEach((t: any) => {
@@ -57,15 +58,16 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
                 title: t.title,
                 type: 'task',
                 status: t.status,
-                href: `/projects/${t.project_id}/tasks` // Can refine to specific task view if available
+                href: `/projects/${t.project_id}/tasks`
             })
         })
     }
 
     // 3. Search Teams
+    // Using !inner ensures that we only get teams where the team itself matches the search query
     const { data: teams } = await supabase
         .from('team_members')
-        .select('teams(id, name)')
+        .select('teams!inner(id, name)')
         .eq('user_id', user.id)
         .ilike('teams.name', `%${query}%`)
         .limit(5)
@@ -77,7 +79,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
                     id: t.teams.id,
                     title: t.teams.name,
                     type: 'team',
-                    href: `/dashboard` // Update to dynamic team view if implemented
+                    href: `/dashboard`
                 })
             }
         })

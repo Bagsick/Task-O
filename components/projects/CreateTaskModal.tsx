@@ -103,8 +103,8 @@ users: user_id(
     `)
             .eq('project_id', projectId)
 
-        // Tech Lead filtering logic
-        if (userRole === 'tech_lead' && selectedTeamId) {
+        // Team filtering logic: if a team is selected, only show members of that team
+        if (selectedTeamId) {
             // Fetch team members for the selected team
             const { data: teamMembers } = await supabase
                 .from('team_members')
