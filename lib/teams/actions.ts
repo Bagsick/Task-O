@@ -265,6 +265,27 @@ export async function updateMemberRole(teamId: string, userId: string, role: 'ad
         throw new Error('Only the owner can change roles')
     }
 
+    // If promoting to admin, demote other admins first to enforce single admin rule
+    if (role === 'admin') {
+        const { data: existingAdmins } = await supabase
+            .from('team_members')
+            .select('user_id')
+            .eq('team_id', teamId)
+            .eq('role', 'admin')
+
+        if (existingAdmins && existingAdmins.length > 0) {
+            const adminsToDemote = existingAdmins.filter(a => a.user_id !== userId)
+            if (adminsToDemote.length > 0) {
+                const adminIds = adminsToDemote.map(a => a.user_id)
+                await supabase
+                    .from('team_members')
+                    .update({ role: 'member' })
+                    .eq('team_id', teamId)
+                    .in('user_id', adminIds)
+            }
+        }
+    }
+
     const { error } = await supabase
         .from('team_members')
         .update({ role })
