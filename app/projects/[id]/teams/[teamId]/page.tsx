@@ -64,6 +64,7 @@ export default async function TeamDashboardPage({
         .single()
 
     const isAdmin = ['owner', 'admin'].includes(callerMembership?.role || '')
+    const isOwner = callerMembership?.role === 'owner'
 
     // Filter team lead
     const teamLead = team.members.find((m: any) => m.role === 'admin' || m.role === 'owner')?.user
@@ -185,7 +186,7 @@ export default async function TeamDashboardPage({
                     </div>
                 </section>
 
-                <TeamPersonnelClient team={team} projectId={projectId} isAdmin={isAdmin} tasks={tasks || []} />
+                <TeamPersonnelClient team={team} projectId={projectId} isAdmin={isAdmin} isOwner={isOwner} tasks={tasks || []} />
             </div>
         </div>
     )
