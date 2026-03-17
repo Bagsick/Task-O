@@ -23,7 +23,7 @@ BEGIN
     AND owner_id = auth.uid()
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.is_accepted_project_member(p_id UUID)
 RETURNS BOOLEAN AS $$
@@ -35,7 +35,7 @@ BEGIN
     AND status = 'accepted'
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.is_project_admin_or_manager(p_id UUID)
 RETURNS BOOLEAN AS $$
@@ -46,12 +46,12 @@ BEGIN
       SELECT 1 FROM public.project_members
       WHERE project_id = p_id
       AND user_id = auth.uid()
-      AND role IN ('admin', 'manager')
+      AND role IN ('admin', 'manager', 'tech_lead')
       AND status = 'accepted'
     )
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.is_team_member(t_id UUID)
 RETURNS BOOLEAN AS $$
@@ -62,7 +62,7 @@ BEGIN
     AND user_id = auth.uid()
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 3. PROJECTS RLS
 CREATE POLICY "Projects - Select" ON public.projects FOR SELECT 
@@ -122,12 +122,9 @@ USING (owner_id = auth.uid());
 -- 7. TEAM MEMBERS RLS
 CREATE POLICY "Team Members - Select" ON public.team_members FOR SELECT 
 USING (
-    user_id = auth.uid() OR
-    public.is_team_member(team_id) OR
     EXISTS (
         SELECT 1 FROM public.teams 
-        WHERE id = team_members.team_id 
-        AND (owner_id = auth.uid() OR public.is_project_owner(project_id) OR public.is_accepted_project_member(project_id))
+        WHERE id = team_members.team_id
     )
 );
 

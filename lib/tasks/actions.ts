@@ -290,8 +290,8 @@ export async function deleteTask(taskId: string) {
             .eq('user_id', user.id)
             .single()
 
-        if (member?.role !== 'admin' && member?.role !== 'manager') {
-            throw new Error('Only Project Admins or Managers can delete tasks. Team members cannot delete tasks.')
+        if (member?.role !== 'admin' && member?.role !== 'manager' && member?.role !== 'tech_lead') {
+            throw new Error('Only Project Admins, Managers, or Tech Leads can delete tasks. Team members cannot delete tasks.')
         }
     }
 
