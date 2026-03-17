@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Users, UserPlus, Shield, MoreVertical } from 'lucide-react'
+import { Plus, Users, UserPlus, Shield, MoreVertical, UserMinus } from 'lucide-react'
 import Image from 'next/image'
 import Drawer from '@/components/ui/Drawer'
 import TeamAssignmentDrawer from '@/components/teams/TeamAssignmentDrawer'
-import { updateMemberRole } from '@/lib/teams/actions'
+import { updateMemberRole, removeMember } from '@/lib/teams/actions'
 import { useRouter } from 'next/navigation'
 
 interface TeamPersonnelClientProps {
@@ -42,6 +42,19 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner,
             router.refresh()
         } catch (error) {
             console.error('Failed to update role:', error)
+        } finally {
+            setIsUpdating(null)
+        }
+    }
+
+    const handleRemoveMember = async (memberId: string, userId: string) => {
+        if (!confirm('Are you sure you want to remove this member from the team?')) return
+        setIsUpdating(memberId)
+        try {
+            await removeMember(team.id, userId)
+            router.refresh()
+        } catch (error) {
+            console.error('Failed to remove member:', error)
         } finally {
             setIsUpdating(null)
         }
@@ -100,7 +113,7 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner,
                                     </p>
                                     <p className="text-[8px] font-black text-gray-400 uppercase tracking-tightest">Efficiency</p>
                                 </div>
-                                {isOwner && member.role !== 'owner' && (
+                                {((isOwner && member.role !== 'owner') || (isAdmin && member.role === 'member')) && (
                                     <div className="relative actions-menu">
                                         <button
                                             onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
@@ -109,21 +122,38 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner,
                                             <MoreVertical size={14} />
                                         </button>
                                         {openMenuId === member.id && (
-                                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-lg py-1 z-20 animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-lg py-1 z-20 animate-in fade-in zoom-in-95 duration-100 divide-y divide-gray-100 dark:divide-slate-800/10">
+                                                {isOwner && (
+                                                    <button
+                                                        onClick={() => {
+                                                            handleRoleChange(member.id, member.user.id, member.role === 'admin' ? 'member' : 'admin')
+                                                            setOpenMenuId(null)
+                                                        }}
+                                                        disabled={isUpdating === member.id}
+                                                        className="w-full px-3 py-2 text-left text-[10px] font-black text-gray-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-500 transition-colors flex items-center gap-1.5"
+                                                    >
+                                                        {isUpdating === member.id ? (
+                                                            <div className="w-2.5 h-2.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <Shield size={10} className="text-indigo-500" />
+                                                        )}
+                                                        {member.role === 'admin' ? 'Make Member' : 'Make Admin'}
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => {
-                                                        handleRoleChange(member.id, member.user.id, member.role === 'admin' ? 'member' : 'admin')
+                                                        handleRemoveMember(member.id, member.user.id)
                                                         setOpenMenuId(null)
                                                     }}
                                                     disabled={isUpdating === member.id}
-                                                    className="w-full px-3 py-2 text-left text-[10px] font-black text-gray-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-500 transition-colors flex items-center gap-1.5"
+                                                    className="w-full px-3 py-2 text-left text-[10px] font-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center gap-1.5"
                                                 >
                                                     {isUpdating === member.id ? (
-                                                        <div className="w-2.5 h-2.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                        <div className="w-2.5 h-2.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
                                                     ) : (
-                                                        <Shield size={10} className="text-indigo-500" />
+                                                        <UserMinus size={10} className="text-rose-500" />
                                                     )}
-                                                    {member.role === 'admin' ? 'Make Member' : 'Make Admin'}
+                                                    Remove Member
                                                 </button>
                                             </div>
                                         )}
