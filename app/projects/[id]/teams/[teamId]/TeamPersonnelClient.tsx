@@ -1,21 +1,51 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Users, UserPlus, Shield } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Users, UserPlus, Shield, MoreVertical } from 'lucide-react'
 import Image from 'next/image'
 import Drawer from '@/components/ui/Drawer'
 import TeamAssignmentDrawer from '@/components/teams/TeamAssignmentDrawer'
+import { updateMemberRole } from '@/lib/teams/actions'
+import { useRouter } from 'next/navigation'
 
 interface TeamPersonnelClientProps {
     team: any
     projectId: string
     isAdmin: boolean
+    isOwner: boolean
     tasks: any[]
 }
 
-export default function TeamPersonnelClient({ team, projectId, isAdmin, tasks }: TeamPersonnelClientProps) {
+export default function TeamPersonnelClient({ team, projectId, isAdmin, isOwner, tasks }: TeamPersonnelClientProps) {
+    const router = useRouter()
     const [isAssignmentOpen, setIsAssignmentOpen] = useState(false)
-    const existingMemberIds = team.members.filter((m: any) => m.user).map((m: any) => m.user.id)
+    const [isUpdating, setIsUpdating] = useState<string | null>(null)
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+    const existingMemberIds = team.members.map((m: any) => m.user.id)
+    
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement
+            // Close if click is outside .actions-menu
+            if (openMenuId && !target.closest('.actions-menu')) {
+                setOpenMenuId(null)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [openMenuId])
+
+    const handleRoleChange = async (memberId: string, userId: string, newRole: 'admin' | 'member') => {
+        setIsUpdating(memberId)
+        try {
+            await updateMemberRole(team.id, userId, newRole)
+            router.refresh()
+        } catch (error) {
+            console.error('Failed to update role:', error)
+        } finally {
+            setIsUpdating(null)
+        }
+    }
 
     return (
         <section className="space-y-8">
@@ -62,12 +92,43 @@ export default function TeamPersonnelClient({ team, projectId, isAdmin, tasks }:
                                     </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-[10px] font-black text-gray-900 dark:text-slate-100">
-                                    {Math.round((tasks.filter(t => t.assigned_to === member.user?.id && t.status === 'completed').length /
-                                        Math.max(tasks.filter(t => t.assigned_to === member.user?.id).length, 1)) * 100)}%
-                                </p>
-                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-tightest">Efficiency</p>
+                            <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black text-gray-900 dark:text-slate-100">
+                                        {Math.round((tasks.filter(t => t.assigned_to === member.user.id && t.status === 'completed').length /
+                                            Math.max(tasks.filter(t => t.assigned_to === member.user.id).length, 1)) * 100)}%
+                                    </p>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-tightest">Efficiency</p>
+                                </div>
+                                {isOwner && member.role !== 'owner' && (
+                                    <div className="relative actions-menu">
+                                        <button
+                                            onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
+                                            className="p-1 text-gray-400 hover:text-indigo-500 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
+                                        >
+                                            <MoreVertical size={14} />
+                                        </button>
+                                        {openMenuId === member.id && (
+                                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-lg py-1 z-20 animate-in fade-in zoom-in-95 duration-100">
+                                                <button
+                                                    onClick={() => {
+                                                        handleRoleChange(member.id, member.user.id, member.role === 'admin' ? 'member' : 'admin')
+                                                        setOpenMenuId(null)
+                                                    }}
+                                                    disabled={isUpdating === member.id}
+                                                    className="w-full px-3 py-2 text-left text-[10px] font-black text-gray-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-500 transition-colors flex items-center gap-1.5"
+                                                >
+                                                    {isUpdating === member.id ? (
+                                                        <div className="w-2.5 h-2.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Shield size={10} className="text-indigo-500" />
+                                                    )}
+                                                    {member.role === 'admin' ? 'Make Member' : 'Make Admin'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
