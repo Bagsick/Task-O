@@ -30,14 +30,18 @@ export default function GlobalSearch() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
-    // Focus input when open
+    // Outside click listener
     useEffect(() => {
-        if (isOpen) {
-            setTimeout(() => inputRef.current?.focus(), 10)
-            setQuery('')
-            setResults([])
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement
+            if (isOpen && !target.closest('.global-search-container')) {
+                setIsOpen(false)
+            }
         }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [isOpen])
+
 
     // Search Logic with Debounce
     const handleSearch = useCallback(async (val: string) => {
@@ -56,6 +60,18 @@ export default function GlobalSearch() {
             setLoading(false)
         }
     }, [])
+
+    // Focus input when open
+    useEffect(() => {
+        if (isOpen) {
+            setTimeout(() => inputRef.current?.focus(), 10)
+            if (query) {
+                handleSearch(query)
+            } else {
+                setResults([])
+            }
+        }
+    }, [isOpen, query, handleSearch])
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -85,7 +101,7 @@ export default function GlobalSearch() {
     }
 
     return (
-        <div className="relative group flex-1 lg:flex-shrink-0 lg:flex-initial h-9 sm:h-10 lg:h-[43px] max-w-[629px] w-full z-50">
+        <div className="relative group flex-1 lg:flex-shrink-0 lg:flex-initial h-9 sm:h-10 lg:h-[43px] max-w-[629px] w-full z-50 global-search-container">
             <div className={`absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none transition-colors ${isOpen ? 'text-[#6366f1]' : 'text-gray-400 group-hover:text-blue-500'}`}>
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} className="sm:w-[15px] sm:h-[15px]" />}
             </div>
@@ -114,11 +130,7 @@ export default function GlobalSearch() {
             {/* Dropdown Results */}
             {isOpen && (query.length >= 2 || results.length > 0) && (
                 <>
-                    {/* Backdrop for click-outside */}
-                    <div
-                        className="fixed inset-0 z-[-1]"
-                        onClick={() => setIsOpen(false)}
-                    />
+                    {/* Backdrop for click-outside handled by useEffect */}
 
                     <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-900 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-slate-800/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="max-h-[min(70vh,500px)] overflow-y-auto p-3 custom-scrollbar">
