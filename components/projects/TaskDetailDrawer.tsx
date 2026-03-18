@@ -5,13 +5,14 @@ import Image from 'next/image'
 import {
     Calendar, CheckCircle2, Clock, Circle, AlertCircle, User, Trash2,
     Tag, Layout, MessageSquare, History, AtSign, Send, Paperclip,
-    MoreHorizontal, ChevronRight, Hash, Shield, Flag, X, FileText
+    MoreHorizontal, ChevronRight, Hash, Shield, Flag, X, FileText, Pencil, ChevronDown
 } from 'lucide-react'
 import { updateTask, deleteTask } from '@/lib/tasks/actions'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import ConfirmationModal from '../ui/ConfirmationModal'
+import EditTaskModal from './EditTaskModal'
 
 interface TaskDetailDrawerProps {
     task: any
@@ -38,6 +39,26 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     const [projectMembers, setProjectMembers] = useState<any[]>([])
     const [teamInfo, setTeamInfo] = useState<any>(null)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [showMoreButton, setShowMoreButton] = useState(false)
+
+    useEffect(() => {
+        const el = scrollRef.current?.closest('.custom-scrollbar') || scrollRef.current
+        if (!el) return
+
+        const handleScroll = () => {
+            const canScroll = el.scrollHeight > el.clientHeight
+            const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
+            setShowMoreButton(canScroll && !isAtBottom)
+        }
+
+        el.addEventListener('scroll', handleScroll)
+        const timer = setTimeout(handleScroll, 500) // delay for load
+        return () => {
+            el.removeEventListener('scroll', handleScroll)
+            clearTimeout(timer)
+        }
+    }, [activities, comments])
     const [isExiting, setIsExiting] = useState(false)
     const [isMounted, setIsMounted] = useState(false)
 
@@ -206,8 +227,9 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     return (
         <div className={`flex flex-col h-full bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out transform ${isMounted && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide">
-                <div className="p-6 space-y-8">
+            <div className="flex-1 relative overflow-hidden flex flex-col">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
+                    <div className="p-0 space-y-6">
                     {/* Execution Details */}
                     <div className="space-y-4">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
@@ -328,21 +350,58 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         ))}
                     </div>
                 </div>
+                {showMoreButton && (
+                    <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
+                        <button 
+                            onClick={() => {
+                                const el = scrollRef.current?.closest('.custom-scrollbar') || scrollRef.current
+                                el?.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+                            }}
+                            className="bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md border border-gray-100/10 dark:border-slate-800/80 px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-100 hover:scale-105 transition-all shadow-xl shadow-indigo-500/5 animate-bounce"
+                        >
+                            <ChevronDown size={14} className="text-indigo-500" />
+                            More Contents Below
+                        </button>
+                    </div>
+                )}
+            </div>
             </div>
 
             {/* Admin Actions */}
             {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead' || userRole === 'owner' || canManage || task.created_by === currentUserId) && (
-                <div className="px-8 py-4 border-t border-gray-50 dark:border-slate-800/50 flex justify-center">
+                <div className="p-6 border-t border-gray-50 dark:border-slate-800/50 flex gap-4">
+                    <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        disabled={loading}
+                        className="flex-1 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-98 disabled:opacity-30 flex items-center justify-center gap-2"
+                    >
+                        <Pencil size={14} />
+                        Edit Task
+                    </button>
                     <button
                         onClick={() => setIsDeleteModalOpen(true)}
                         disabled={loading}
-                        className="flex items-center justify-center gap-2 w-full py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/10 hover:shadow-red-500/20 active:scale-98 disabled:opacity-30"
+                        className="flex-1 py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/10 hover:shadow-red-500/20 active:scale-98 disabled:opacity-30 flex items-center justify-center gap-2"
                     >
                         <Trash2 size={14} />
                         Delete Task
                     </button>
                 </div>
             )}
+
+            <EditTaskModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                task={task}
+                onUpdate={() => {
+                    fetchTeamInfo()
+                    fetchUserRole()
+                    fetchActivities()
+                    fetchComments()
+                    if (onClose) onClose()
+                    router.refresh()
+                }}
+            />
 
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
