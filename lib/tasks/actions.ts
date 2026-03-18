@@ -281,20 +281,37 @@ export async function deleteTask(taskId: string) {
     // 1. Check permissions
     const { data: task } = await supabase
         .from('tasks')
-        .select('project_id')
+        .select('project_id, team_id')
         .eq('id', taskId)
         .single()
 
     if (task) {
+        let isTeamAdmin = false
+
+        if (task.team_id) {
+            const { data: teamMember } = await supabase
+                .from('team_members')
+                .select('role')
+                .eq('team_id', task.team_id)
+                .eq('user_id', user.id)
+                .maybeSingle()
+
+            if (teamMember && (teamMember.role === 'admin' || teamMember.role === 'owner')) {
+                isTeamAdmin = true
+            }
+        }
+
         const { data: member } = await supabase
             .from('project_members')
             .select('role')
             .eq('project_id', task.project_id)
             .eq('user_id', user.id)
-            .single()
+            .maybeSingle()
 
-        if (member?.role !== 'admin' && member?.role !== 'manager' && member?.role !== 'tech_lead') {
-            throw new Error('Only Project Admins, Managers, or Tech Leads can delete tasks. Team members cannot delete tasks.')
+        const role = member?.role || 'viewer'
+
+        if (role !== 'admin' && role !== 'manager' && role !== 'tech_lead' && !isTeamAdmin) {
+            throw new Error('Only Project Admins, Managers, Tech Leads, or Team Admins can delete tasks.')
         }
     }
 
