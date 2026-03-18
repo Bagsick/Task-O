@@ -22,6 +22,7 @@ export default function ProjectKanbanClient({ projectId, initialTeamId }: Projec
     const [teams, setTeams] = useState<any[]>([])
     const [selectedTeam, setSelectedTeam] = useState<string | undefined>(initialTeamId)
     const [canManage, setCanManage] = useState(false)
+    const [isProjectAdmin, setIsProjectAdmin] = useState(false)
     const [tasks, setTasks] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedTask, setSelectedTask] = useState<any | null>(null)
@@ -71,13 +72,38 @@ export default function ProjectKanbanClient({ projectId, initialTeamId }: Projec
                     .eq('user_id', user.id)
                     .single()
 
-                setCanManage(membership?.role === 'admin' || membership?.role === 'manager' || membership?.role === 'owner')
+                const projectAdminStatus = membership?.role === 'admin' || membership?.role === 'manager' || membership?.role === 'owner'
+                setIsProjectAdmin(projectAdminStatus)
             }
 
             fetchTasks()
         }
         fetchInitialData()
     }, [projectId, fetchTasks])
+
+    useEffect(() => {
+        const checkPermissions = async () => {
+            if (isProjectAdmin) {
+                setCanManage(true)
+                return
+            }
+
+            if (selectedTeam && user) {
+                const { data: teamMembership } = await supabase
+                    .from('team_members')
+                    .select('role')
+                    .eq('team_id', selectedTeam)
+                    .eq('user_id', user.id)
+                    .single()
+
+                setCanManage(teamMembership?.role === 'admin' || teamMembership?.role === 'owner')
+            } else {
+                setCanManage(false)
+            }
+        }
+
+        checkPermissions()
+    }, [selectedTeam, isProjectAdmin, user])
 
     useEffect(() => {
         fetchTasks()
