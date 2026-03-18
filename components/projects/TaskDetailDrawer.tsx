@@ -225,7 +225,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team</label>
                             <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-xs font-bold text-gray-900 dark:text-slate-100">
-                                {formatLabel(teamInfo?.name || task.team?.name || 'CENTRAL_OPS')}
+                                {formatLabel(teamInfo?.name || task.team?.name || 'No Team')}
                             </div>
                         </div>
 
@@ -331,7 +331,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
             </div>
 
             {/* Admin Actions */}
-            {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead' || canManage) && (
+            {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead' || userRole === 'owner' || canManage || task.created_by === currentUserId) && (
                 <div className="px-8 py-4 border-t border-gray-50 dark:border-slate-800/50 flex justify-center">
                     <button
                         onClick={() => setIsDeleteModalOpen(true)}
