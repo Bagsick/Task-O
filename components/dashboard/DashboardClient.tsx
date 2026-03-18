@@ -5,6 +5,8 @@ import { Plus, MoreHorizontal, Calendar, AlertCircle, Layout, CheckCircle2, Chev
 import { format } from 'date-fns'
 import dynamic from 'next/dynamic'
 const CreateTaskModal = dynamic(() => import('@/components/projects/CreateTaskModal'), { ssr: false })
+const TaskDetailDrawer = dynamic(() => import('@/components/projects/TaskDetailDrawer'), { ssr: false })
+import Modal from '@/components/ui/Modal'
 import CreateTeamModal from '@/components/teams/CreateTeamModal'
 
 // Shared state for Dashboard actions to avoid duplicate modals
@@ -65,20 +67,20 @@ export function TeamActions() {
     )
 }
 
-export function SectionDropdown() {
+export function SectionDropdown({ onViewDetails }: { onViewDetails?: () => void }) {
     const [isOpen, setIsOpen] = useState(false)
 
     return (
         <div className="relative">
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen) }}
                 className="p-1 px-2 text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400 transition-colors"
             >
                 <MoreHorizontal size={20} />
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <button className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-[#f3f4ff] hover:text-[#6366f1] transition-colors">
+                    <button onClick={(e) => { e.stopPropagation(); onViewDetails?.(); setIsOpen(false) }} className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-[#f3f4ff] hover:text-[#6366f1] transition-colors">
                         View Details
                     </button>
                     <button className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-[#f3f4ff] hover:text-[#6366f1] transition-colors">
@@ -101,6 +103,7 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
     overdueCount: number
 }) {
     const [activeTab, setActiveTab] = useState<'Pending' | 'Overdue' | 'Resolved'>('Pending')
+    const [selectedTask, setSelectedTask] = useState<any>(null)
 
     const filteredTasks = tasks.filter(task => {
         if (activeTab === 'Resolved') return task.status === 'completed'
@@ -159,7 +162,7 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
 
             <div className="space-y-4 min-h-[300px]">
                 {filteredTasks.length > 0 ? filteredTasks.map((task) => (
-                    <div key={task.id} className="flex items-start gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div key={task.id} onClick={() => setSelectedTask(task)} className="flex items-start gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer">
                         <div className="mt-1 w-6 h-6 rounded-full border-2 border-indigo-50 dark:border-indigo-900/20 flex-shrink-0 bg-white dark:bg-slate-950 flex items-center justify-center shadow-sm">
                             <div className="w-2.5 h-2.5 rounded-full bg-[#6366f1] shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
                         </div>
@@ -179,9 +182,7 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
                                 )}
                             </div>
                         </div>
-                        <div className="mt-1">
-                            <SectionDropdown />
-                        </div>
+
                     </div>
                 )) : (
                     <div className="py-20 text-center">
@@ -192,6 +193,21 @@ export function TaskPriorityList({ tasks, completedCount, pendingCount, overdueC
                     </div>
                 )}
             </div>
+
+            {selectedTask && (
+                <Modal
+                    isOpen={!!selectedTask}
+                    onClose={() => setSelectedTask(null)}
+                    title="Task Details"
+                >
+                    <TaskDetailDrawer
+                        task={selectedTask}
+                        projectId={selectedTask.project_id || ''}
+                        onClose={() => setSelectedTask(null)}
+                        canManage={false}
+                    />
+                </Modal>
+            )}
         </div>
     )
 }
