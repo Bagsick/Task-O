@@ -183,7 +183,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     if (!task) return
 
     // Role-based validation
-    const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager'
+    const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager' || canManage
     const isTechLead = userRole === 'tech_lead'
     const isMember = userRole === 'member'
 

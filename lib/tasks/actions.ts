@@ -54,7 +54,8 @@ export async function createTask(data: {
         if (!isTeamMember) throw new Error('Tech Leads can only assign tasks to their own team members')
     }
 
-    // Member/Editor validation: must be in the team if team_id is provided
+    let isTeamAdmin = false
+
     if (data.team_id) {
         const { data: isTeamMember } = await supabase
             .from('team_members')
@@ -66,10 +67,12 @@ export async function createTask(data: {
         if (!isTeamMember) throw new Error('You must be a member of the team to create tasks for it')
 
         if (isTeamMember.role === 'viewer') throw new Error('Viewers cannot create tasks')
+
+        isTeamAdmin = ['admin', 'owner'].includes(isTeamMember.role)
     }
 
     // Member validation: can only assign to themselves
-    if (role === 'member' && data.assigned_to && data.assigned_to !== user.id) {
+    if (role === 'member' && !isTeamAdmin && data.assigned_to && data.assigned_to !== user.id) {
         throw new Error('Members can only assign tasks to themselves')
     }
 
