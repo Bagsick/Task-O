@@ -22,6 +22,8 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
     const [projects, setProjects] = useState<any[]>([])
     const [teams, setTeams] = useState<any[]>([])
     const [selectedTeamId, setSelectedTeamId] = useState(initialTeamId || '')
+    const [isTeamAdmin, setIsTeamAdmin] = useState(false)
+    const [projectOwnerId, setProjectOwnerId] = useState<string | null>(null)
     const [members, setMembers] = useState<any[]>([])
     const { nextStep, isActive, startTour } = useGuidedTour()
     const [userRole, setUserRole] = useState<string>('viewer')
@@ -41,19 +43,28 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
         const { data: projectData } = await supabase
             .from('project_members')
             .select(`
-role,
-    projects(
-        id,
-        name
-    )
-        `)
+                role,
+                projects(
+                    id,
+                    name,
+                    owner_id
+                )
+            `)
             .eq('user_id', user.id)
 
         const projectList = projectData?.map((p: any) => p.projects).filter(Boolean) || []
         setProjects(projectList)
 
-        const currentProjectRole = projectData?.find((p: any) => p.projects?.id === (projectId || initialProjectId))?.role || 'viewer'
+        const currentProjectData = projectData?.find((p: any) => p.projects?.id === (projectId || initialProjectId))
+        const currentProjectRole = currentProjectData?.role || 'viewer'
         setUserRole(currentProjectRole)
+
+        if (currentProjectData) {
+            const projectsObj = currentProjectData.projects as any
+            if (projectsObj?.owner_id) {
+                setProjectOwnerId(projectsObj.owner_id)
+            }
+        }
 
         if (projectList.length > 0 && !projectId && !initialProjectId) {
             setProjectId(projectList[0].id)
@@ -103,17 +114,27 @@ users: user_id(
     `)
             .eq('project_id', projectId)
 
+        let userIsTeamAdmin = false
+        const { data: { user } } = await supabase.auth.getUser()
+
         // Team filtering logic: if a team is selected, only show members of that team
         if (selectedTeamId) {
             // Fetch team members for the selected team
             const { data: teamMembers } = await supabase
                 .from('team_members')
-                .select('user_id')
+                .select('user_id, role')
                 .eq('team_id', selectedTeamId)
 
             const teamMemberIds = teamMembers?.map(tm => tm.user_id) || []
             query = query.in('user_id', teamMemberIds)
+
+            if (user) {
+                const userTeamMembership = teamMembers?.find(tm => tm.user_id === user.id)
+                userIsTeamAdmin = userTeamMembership?.role === 'admin' || userTeamMembership?.role === 'owner'
+            }
         }
+
+        setIsTeamAdmin(userIsTeamAdmin)
 
         const { data: memberData } = await query
 
@@ -121,8 +142,7 @@ users: user_id(
         setMembers(memberList)
 
         // Auto-assign for member role
-        if (userRole === 'member') {
-            const { data: { user } } = await supabase.auth.getUser()
+        if (userRole === 'member' && !userIsTeamAdmin) {
             if (user) setAssignedMemberIds([user.id])
         }
     }, [projectId, userRole, selectedTeamId])
@@ -257,18 +277,39 @@ users: user_id(
                     )}
 
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Title *</label>
-                            <input
-                                id="tour-task-title-input"
-                                autoFocus
-                                required
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-900 dark:text-slate-100 placeholder:font-medium"
-                                placeholder="Task title..."
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Title *</label>
+                                <input
+                                    id="tour-task-title-input"
+                                    autoFocus
+                                    required
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-900 dark:text-slate-100 placeholder:font-medium"
+                                    placeholder="Task title..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Project</label>
+                                <div className="relative group">
+                                    <select
+                                        id="tour-task-project-select"
+                                        required
+                                        value={projectId}
+                                        onChange={(e) => setProjectId(e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-xs font-bold text-gray-900 dark:text-slate-100 appearance-none"
+                                    >
+                                        <option value="">Select Project...</option>
+                                        {projects.map((p, index) => (
+                                            <option key={`${p.id}-${index}`} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -302,11 +343,11 @@ users: user_id(
                                         required
                                         value={assignedMemberIds[0] || ''}
                                         onChange={(e) => setAssignedMemberIds(e.target.value ? [e.target.value] : [])}
-                                        disabled={userRole === 'member'}
+                                        disabled={userRole === 'member' && !isTeamAdmin}
                                         className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-sm font-bold text-gray-900 dark:text-slate-100 appearance-none disabled:opacity-50"
                                     >
                                         <option value="">Select a member...</option>
-                                        {members.map((m, index) => (
+                                        {members.filter(m => !(userRole === 'member' && isTeamAdmin && m.id === projectOwnerId)).map((m, index) => (
                                             <option key={`${m.id}-${index}`} value={m.id}>{m.full_name || m.email}</option>
                                         ))}
                                     </select>
@@ -376,26 +417,7 @@ users: user_id(
                         </div>
 
 
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Project</label>
-                                <div className="relative group">
-                                    <select
-                                        id="tour-task-project-select"
-                                        required
-                                        value={projectId}
-                                        onChange={(e) => setProjectId(e.target.value)}
-                                        className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none transition-all text-xs font-bold text-gray-900 dark:text-slate-100 appearance-none"
-                                    >
-                                        <option value="">Select Project...</option>
-                                        {projects.map((p, index) => (
-                                            <option key={`${p.id}-${index}`} value={p.id}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                </div>
-                            </div>
-                        </div>
+
 
                         <div className="space-y-2">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Description</label>
