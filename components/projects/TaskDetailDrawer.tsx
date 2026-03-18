@@ -38,6 +38,8 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     const [projectMembers, setProjectMembers] = useState<any[]>([])
     const [teamInfo, setTeamInfo] = useState<any>(null)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [isExiting, setIsExiting] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
 
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -103,32 +105,50 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
         fetchComments()
         fetchProjectMembers()
         fetchUserRole()
+        setIsMounted(true)
         if (task.team_id) fetchTeamInfo()
     }, [task.id, task.team_id, fetchActivities, fetchComments, fetchProjectMembers, fetchUserRole, fetchTeamInfo])
 
     const handleUpdate = async (updates: any) => {
         if (userRole === 'viewer') return
         setLoading(true)
+        const startTime = Date.now()
         try {
             await updateTask(task.id, updates)
             router.refresh()
+            const elapsed = Date.now() - startTime
+            const delay = Math.max(0, 1700 - elapsed)
+
+            setTimeout(() => {
+                setIsExiting(true)
+                setTimeout(() => {
+                    onClose()
+                }, 300)
+            }, delay)
         } catch (error) {
             console.error('Failed to update task:', error)
-        } finally {
             setLoading(false)
         }
     }
 
     const handleDelete = async () => {
         setLoading(true)
+        const startTime = Date.now()
         try {
             await deleteTask(task.id)
-            onClose()
             router.refresh()
+            const elapsed = Date.now() - startTime
+            const delay = Math.max(0, 1700 - elapsed)
+
+            setTimeout(() => {
+                setIsExiting(true)
+                setTimeout(() => {
+                    onClose()
+                }, 300)
+            }, delay)
         } catch (error: any) {
             console.error('Failed to delete task:', error)
             alert(error.message || 'Failed to delete task')
-        } finally {
             setLoading(false)
         }
     }
@@ -184,7 +204,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     }
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-slate-900 animate-in slide-in-from-right duration-300">
+        <div className={`flex flex-col h-full bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out transform ${isMounted && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto scrollbar-hide">
                 <div className="p-6 space-y-8">
@@ -311,12 +331,12 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
             </div>
 
             {/* Admin Actions */}
-            {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead') && (
+            {(userRole === 'admin' || userRole === 'manager' || userRole === 'tech_lead' || canManage) && (
                 <div className="px-8 py-4 border-t border-gray-50 dark:border-slate-800/50 flex justify-center">
                     <button
                         onClick={() => setIsDeleteModalOpen(true)}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 text-[10px] font-black text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-widest disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 w-full py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/10 hover:shadow-red-500/20 active:scale-98 disabled:opacity-30"
                     >
                         <Trash2 size={14} />
                         Delete Task
@@ -330,35 +350,64 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                 onConfirm={handleDelete}
                 title="Delete Task"
                 message="Are you sure you want to delete this task? This action cannot be undone."
-                confirmLabel="Delete Mission"
+                confirmLabel="Delete Task"
                 type="danger"
             />
 
             {/* Bottom Action Bar */}
-            <div className="p-8 border-t border-gray-50 dark:border-slate-800/50 relative shrink-0 flex">
-                <button
-                    onClick={() => {
-                        setStatus('in_progress')
-                        handleUpdate({ status: 'in_progress' })
-                    }}
-                    disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId)}
-                    className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-gray-50 dark:hover:bg-slate-900 ${status === 'in_progress' ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'
-                        } disabled:opacity-50`}
-                >
-                    {status === 'in_progress' ? 'Already Doing' : 'Mark as Doing'}
-                </button>
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-50 dark:bg-slate-800/50" />
-                <button
-                    onClick={() => {
-                        setStatus('completed')
-                        handleUpdate({ status: 'completed' })
-                    }}
-                    disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId)}
-                    className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-gray-50 dark:hover:bg-slate-900 ${status === 'completed' ? 'text-emerald-500' : 'text-[#6366f1] hover:text-emerald-500'
-                        } disabled:opacity-50`}
-                >
-                    {status === 'completed' ? 'Tasks Done' : 'Mark as Done'}
-                </button>
+            <div className="p-6 border-t border-gray-50 dark:border-slate-800/50 flex gap-4 relative shrink-0">
+                {(status === 'pending' || status === 'todo') && (
+                    <>
+                        <button
+                            onClick={() => { setStatus('in_progress'); handleUpdate({ status: 'in_progress' }) }}
+                            disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
+                            className="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 active:scale-98 disabled:opacity-50"
+                        >
+                            <Circle size={14} className="animate-pulse" />
+                            Start Doing
+                        </button>
+                        <button
+                            onClick={() => { setStatus('completed'); handleUpdate({ status: 'completed' }) }}
+                            disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
+                            className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 disabled:opacity-50"
+                        >
+                            <CheckCircle2 size={14} />
+                            Mark as Done
+                        </button>
+                    </>
+                )}
+
+                {status === 'in_progress' && (
+                    <>
+                        <button
+                            onClick={() => { setStatus('pending'); handleUpdate({ status: 'pending' }) }}
+                            disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
+                            className="flex-1 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50"
+                        >
+                            <History size={14} />
+                            Revert to Todo
+                        </button>
+                        <button
+                            onClick={() => { setStatus('completed'); handleUpdate({ status: 'completed' }) }}
+                            disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
+                            className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 disabled:opacity-50"
+                        >
+                            <CheckCircle2 size={14} />
+                            Mark as Done
+                        </button>
+                    </>
+                )}
+
+                {status === 'completed' && (
+                    <button
+                        onClick={() => { setStatus('in_progress'); handleUpdate({ status: 'in_progress' }) }}
+                        disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
+                        className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 active:scale-98 disabled:opacity-50"
+                    >
+                        <History size={14} />
+                        Reopen Task (In Progress)
+                    </button>
+                )}
             </div>
         </div >
     )
