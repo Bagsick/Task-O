@@ -99,7 +99,7 @@ export default function TaskTable({ tasks, onTaskClick }: TaskTableProps) {
                             </td>
                             <td className="px-6 py-4">
                                 <span className="text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-widest">
-                                    {formatLabel(task.team?.name || 'CENTRAL_OPS')}
+                                    {formatLabel(task.team?.name || 'No Team')}
                                 </span>
                             </td>
                             <td className="px-6 py-4">

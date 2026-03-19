@@ -54,7 +54,8 @@ export async function createTask(data: {
         if (!isTeamMember) throw new Error('Tech Leads can only assign tasks to their own team members')
     }
 
-    // Member/Editor validation: must be in the team if team_id is provided
+    let isTeamAdmin = false
+
     if (data.team_id) {
         const { data: isTeamMember } = await supabase
             .from('team_members')
@@ -66,10 +67,12 @@ export async function createTask(data: {
         if (!isTeamMember) throw new Error('You must be a member of the team to create tasks for it')
 
         if (isTeamMember.role === 'viewer') throw new Error('Viewers cannot create tasks')
+
+        isTeamAdmin = ['admin', 'owner'].includes(isTeamMember.role)
     }
 
     // Member validation: can only assign to themselves
-    if (role === 'member' && data.assigned_to && data.assigned_to !== user.id) {
+    if (role === 'member' && !isTeamAdmin && data.assigned_to && data.assigned_to !== user.id) {
         throw new Error('Members can only assign tasks to themselves')
     }
 
@@ -278,20 +281,38 @@ export async function deleteTask(taskId: string) {
     // 1. Check permissions
     const { data: task } = await supabase
         .from('tasks')
-        .select('project_id')
+        .select('project_id, team_id, created_by')
         .eq('id', taskId)
         .single()
 
     if (task) {
+        let isTeamAdmin = false
+
+        if (task.team_id) {
+            const { data: teamMember } = await supabase
+                .from('team_members')
+                .select('role')
+                .eq('team_id', task.team_id)
+                .eq('user_id', user.id)
+                .maybeSingle()
+
+            if (teamMember && (teamMember.role === 'admin' || teamMember.role === 'owner')) {
+                isTeamAdmin = true
+            }
+        }
+
         const { data: member } = await supabase
             .from('project_members')
             .select('role')
             .eq('project_id', task.project_id)
             .eq('user_id', user.id)
-            .single()
+            .maybeSingle()
 
-        if (member?.role !== 'admin' && member?.role !== 'manager' && member?.role !== 'tech_lead') {
-            throw new Error('Only Project Admins, Managers, or Tech Leads can delete tasks. Team members cannot delete tasks.')
+        const role = member?.role || 'viewer'
+
+        const isCreator = task.created_by === user.id
+        if (role !== 'admin' && role !== 'manager' && role !== 'tech_lead' && role !== 'owner' && !isTeamAdmin && !isCreator) {
+            throw new Error('Only Project Admins, Managers, Tech Leads, or Team Admins can delete tasks.')
         }
     }
 

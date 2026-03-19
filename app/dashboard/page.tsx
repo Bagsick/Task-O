@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   Users,
   Bell,
@@ -53,6 +54,7 @@ export default async function DashboardPage() {
             id,
             name,
             avatar_url,
+            project_id,
             team_members(count)
         )
     `)
@@ -164,7 +166,6 @@ export default async function DashboardPage() {
                 <p className="mt-1 text-[11px] lg:text-[13px] text-gray-400 dark:text-slate-500">Collective objectives sorted by priority</p>
               </div>
               <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                <SectionDropdown />
                 <DashboardActions />
               </div>
             </div>
@@ -184,7 +185,6 @@ export default async function DashboardPage() {
                 <h2 className="text-[22px] font-semibold text-gray-900 dark:text-slate-50 tracking-tight">Announcements</h2>
                 <p className="text-xs text-gray-400 dark:text-slate-500 font-bold italic">System briefs and project updates</p>
               </div>
-              <SectionDropdown />
             </div>
 
             <div className="p-4 sm:p-6 lg:p-8 pt-4 sm:pt-5 lg:pt-6 space-y-6 sm:space-y-8 lg:space-y-10 relative flex-1">
@@ -217,7 +217,6 @@ export default async function DashboardPage() {
               <p className="text-xs text-gray-400 dark:text-slate-500">Teams with active tasks</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <SectionDropdown />
               <TeamActions />
             </div>
           </div>
@@ -226,10 +225,8 @@ export default async function DashboardPage() {
             {teams && teams.length > 0 ? teams.filter((m: any) => m.teams).map((membership: any) => {
               const team = membership.teams
               return (
-                <div key={team.id} className="p-6 sm:p-8 lg:p-10 bg-white dark:bg-slate-900 border border-gray-400/40 dark:border-slate-800 rounded-2xl sm:rounded-3xl lg:rounded-[32px] hover:border-[#6366f1] hover:shadow-xl hover:shadow-[#6366f1]/5 transition-all duration-500 group flex flex-col items-center text-center relative overflow-hidden">
-                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 lg:top-4 lg:right-4 text-gray-200 dark:text-slate-800 group-hover:text-gray-400 dark:group-hover:text-gray-600 transition-colors">
-                    <SectionDropdown />
-                  </div>
+                <Link href={`/projects/${team.project_id}/teams/${team.id}`} key={team.id} className="p-6 sm:p-8 lg:p-10 bg-white dark:bg-slate-900 border border-gray-400/40 dark:border-slate-800 rounded-2xl sm:rounded-3xl lg:rounded-[32px] hover:border-[#6366f1] hover:shadow-xl hover:shadow-[#6366f1]/5 transition-all duration-500 group flex flex-col items-center text-center relative overflow-hidden cursor-pointer">
+
                   <div className="w-20 h-20 rounded-[28px] bg-gray-50 dark:bg-slate-800/50 mb-6 flex items-center justify-center text-[#6366f1] text-2xl font-black group-hover:scale-110 transition-transform duration-500 shadow-sm border border-gray-400/40 dark:border-slate-800">
                     {team.avatar_url ? (
                       <Image
@@ -248,7 +245,7 @@ export default async function DashboardPage() {
                       {membership.role}
                     </span>
                   </div>
-                </div>
+                </Link>
               )
             }) : (
               <div className="col-span-full py-12 sm:py-16 lg:py-20 text-center bg-[#fcfcfd] dark:bg-slate-800/50 rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-dashed border-gray-200 dark:border-slate-700 px-4">
