@@ -65,6 +65,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [userTeams, setUserTeams] = useState<string[]>([])
   const { activeTourId, nextStep, currentStep } = useGuidedTour()
 
   const fetchUserContext = useCallback(async () => {
@@ -80,6 +81,13 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
           .single()
         if (member) setUserRole(member.role)
       }
+
+      // Fetch user teams
+      const { data: teams } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', user.id)
+      setUserTeams(teams?.map(t => t.team_id) || [])
     }
   }, [projectId])
 
@@ -186,16 +194,13 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager'
     const isTechLead = userRole === 'tech_lead'
     const isMember = userRole === 'member'
+    const isMemberOfTeam = task.team_id ? userTeams.includes(task.team_id) : false
 
     if (isAdmin) {
       // Full access
-    } else if (isTechLead) {
-      // Can move tasks if they are the lead? 
-      // Simplified: if it's in a team they belong to. 
-      // For now, let's assume if they have the role and it's their team.
-      // We might need to fetch their team_id.
-    } else if (isMember) {
-      if (task.assigned_to !== currentUserId) return
+    } else if (isTechLead || isMember) {
+      // Can move if assigned TO them OR if they are in the team the task belongs to
+      if (task.assigned_to !== currentUserId && !isMemberOfTeam) return
     } else {
       return // Viewer or no role
     }
