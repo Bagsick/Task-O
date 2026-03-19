@@ -158,6 +158,11 @@ users: user_id(
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        const canCreate = userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || isTeamAdmin
+        if (!canCreate) {
+            setError('You do not have permission to create tasks for this project/team.')
+            return
+        }
         if (!projectId) {
             setError('Selection of a Project is mandatory.')
             return
@@ -210,6 +215,7 @@ users: user_id(
     }
 
     const noProjects = !isFetchingInitial && projects.length === 0
+    const canCreate = userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || isTeamAdmin
 
     return (
         <Modal
@@ -228,12 +234,14 @@ users: user_id(
                     </button>
                     {!noProjects && (
                         <button
+                            type="button"
                             id="tour-create-task-submit"
                             onClick={handleSubmit}
-                            disabled={loading || !title || !projectId}
-                            className="flex-1 py-4 text-[10px] font-black text-[#6366f1] uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-slate-900 transition-all disabled:opacity-50"
+                            disabled={loading || !title || !projectId || !canCreate}
+                            className="flex-1 py-4 text-[10px] font-black text-[#6366f1] uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-slate-900 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {loading ? 'Executing...' : 'Create Task'}
+                            {!canCreate && <span title="Permission required"><Shield size={12} className="text-amber-500" /></span>}
                         </button>
                     )}
                 </>

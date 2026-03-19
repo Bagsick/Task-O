@@ -183,7 +183,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     if (!task) return
 
     // Role-based validation
-    const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager' || canManage
+    const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager'
     const isTechLead = userRole === 'tech_lead'
     const isMember = userRole === 'member'
 
@@ -284,7 +284,12 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
                   >
                     <div className="space-y-4">
                       {columnTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
+                        <Draggable 
+                          key={task.id} 
+                          draggableId={task.id} 
+                          index={index}
+                          isDragDisabled={!(userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || task.id === 'tutorial-ghost-task' || task.assigned_to === currentUserId)}
+                        >
                           {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
