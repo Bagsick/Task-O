@@ -25,7 +25,7 @@ export default async function ProjectTasksPage({
         .eq('user_id', user.id)
         .single()
 
-    const canManage = membership?.role === 'admin' || membership?.role === 'manager'
+    const canManage = membership?.role === 'admin' || membership?.role === 'manager' || membership?.role === 'owner'
 
     // Fetch all tasks for this project
     const { data: tasks } = await supabase
