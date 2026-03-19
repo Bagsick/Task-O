@@ -11,7 +11,7 @@ import Modal from '@/components/ui/Modal'
 import { supabase } from '@/lib/supabase/client'
 import { useGuidedTour } from '@/components/GuidedTour'
 
-export default function CreateTaskModal({ isOpen, onClose, initialProjectId, initialTeamId, onSuccess }: { isOpen: boolean, onClose: () => void, initialProjectId?: string, initialTeamId?: string, onSuccess?: () => void }) {
+export default function CreateTaskModal({ isOpen, onClose, initialProjectId, initialTeamId, initialStatus, onSuccess }: { isOpen: boolean, onClose: () => void, initialProjectId?: string, initialTeamId?: string, initialStatus?: string, onSuccess?: () => void }) {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [projectId, setProjectId] = useState(initialProjectId || '')
@@ -28,7 +28,7 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
     const { nextStep, isActive, startTour } = useGuidedTour()
     const [userRole, setUserRole] = useState<string>('viewer')
     const [userTeams, setUserTeams] = useState<string[]>([])
-    const [status, setStatus] = useState('pending')
+    const [status, setStatus] = useState(initialStatus || 'pending')
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -83,8 +83,11 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
     useEffect(() => {
         if (isOpen) {
             fetchContext()
+            if (initialStatus) {
+                setStatus(initialStatus)
+            }
         }
-    }, [isOpen, fetchContext])
+    }, [isOpen, fetchContext, initialStatus])
 
     const fetchData = useCallback(async () => {
         if (!projectId) {
@@ -194,7 +197,7 @@ users: user_id(
         setTitle('')
         setDescription('')
         setPriority('medium')
-        setStatus('pending')
+        setStatus(initialStatus || 'pending')
         setDueDate('')
         setDueTime('')
         setAssignedMemberIds([])
