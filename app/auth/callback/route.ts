@@ -17,6 +17,19 @@ export async function GET(request: NextRequest) {
             supabaseKey: supabaseAnonKey,
         } as any)
         await supabase.auth.exchangeCodeForSession(code)
+
+        const { data: { user } } = await supabase.auth.getUser()
+        const type = requestUrl.searchParams.get('type')
+
+        if (user && type === 'signup') {
+            const createdAt = new Date(user.created_at).getTime()
+            const lastSignInAt = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : createdAt
+
+            if (lastSignInAt - createdAt > 10000) { // 10 seconds difference (existing user)
+                await supabase.auth.signOut()
+                return NextResponse.redirect(new URL('/signup?error=email_exists', request.url))
+            }
+        }
     }
 
     // URL to redirect to after sign in process completes

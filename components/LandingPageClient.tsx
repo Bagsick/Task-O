@@ -10,11 +10,9 @@ interface Stat {
   label: string
 }
 
-interface LandingPageClientProps {
-  stats: Stat[]
-}
+interface LandingPageClientProps {}
 
-export default function LandingPageClient({ stats }: LandingPageClientProps) {
+export default function LandingPageClient({}: LandingPageClientProps) {
   const [isVisible, setIsVisible] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -242,25 +240,7 @@ export default function LandingPageClient({ stats }: LandingPageClientProps) {
         </div>
       </section>
 
-      {/* ── STATS ── */}
-      <section className="relative z-10 py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="rounded-2xl px-8 py-6 grid grid-cols-2 lg:grid-cols-4 gap-6 text-center"
-            style={cardStyle}>
-            {stats.map((s, i) => (
-              <div key={i} data-animate id={`stat-${i}`}
-                className={`transition-all duration-700 ${isVisible[`stat-${i}`] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                style={{ transitionDelay: `${i * 80}ms` }}>
-                <p className="text-2xl font-bold"
-                  style={{ background: 'linear-gradient(135deg, #1A72F0, #0052CC)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {s.value}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* ── FEATURES ── */}
       <section id="features" className="relative z-10 py-20 px-6">
