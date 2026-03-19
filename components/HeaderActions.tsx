@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Bell, CheckCircle2, Layout, Calendar, Clock, AlertCircle, Users, Sun, Moon, UserPlus } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import CreateTaskModal from './projects/CreateTaskModal'
+import CreateProjectModal from './projects/CreateProjectModal'
 import InviteMemberModal from './InviteMemberModal'
 import CreateTeamModal from './teams/CreateTeamModal'
 import { markAllNotificationsAsRead, clearAllNotifications as clearAllAction } from '@/lib/notifications/actions'
@@ -21,6 +22,7 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
     const [isMemberModalOpen, setIsMemberModalOpen] = useState(false)
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
     const [processingId, setProcessingId] = useState<string | null>(null)
@@ -288,13 +290,16 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
                             <Plus size={16} className="text-indigo-500" />
                             New Task
                         </button>
-                        <Link
-                            href="/projects"
+                        <button
+                            onClick={() => {
+                                setIsProjectModalOpen(true)
+                                setIsCreateOpen(false)
+                            }}
                             className="w-full h-11 flex items-center gap-3 px-4 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 transition-all"
                         >
                             <Layout size={16} className="text-emerald-500" />
                             New Project
-                        </Link>
+                        </button>
                         <button
                             id="tour-new-team-option"
                             onClick={() => {
@@ -324,6 +329,11 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
             <CreateTaskModal
                 isOpen={isTaskModalOpen}
                 onClose={() => setIsTaskModalOpen(false)}
+            />
+
+            <CreateProjectModal
+                isOpen={isProjectModalOpen}
+                onClose={() => setIsProjectModalOpen(false)}
             />
 
             <InviteMemberModal
