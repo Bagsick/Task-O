@@ -52,7 +52,12 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
             `)
             .eq('user_id', user.id)
 
-        const projectList = projectData?.map((p: any) => p.projects).filter(Boolean) || []
+        const allowableRoles = ['admin', 'manager', 'owner']
+        const projectList = projectData
+            ?.filter((p: any) => allowableRoles.includes(p.role))
+            ?.map((p: any) => p.projects)
+            .filter(Boolean) || []
+
         setProjects(projectList)
 
         const currentProjectData = projectData?.find((p: any) => p.projects?.id === (projectId || initialProjectId))
