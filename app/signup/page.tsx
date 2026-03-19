@@ -20,6 +20,10 @@ export default function SignupPage() {
 
   useEffect(() => {
     setMounted(true)
+    const errorParam = new URLSearchParams(window.location.search).get('error')
+    if (errorParam === 'email_exists') {
+      setError('The email is already used')
+    }
   }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -29,6 +33,18 @@ export default function SignupPage() {
     setSuccess(false)
 
     try {
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (existingUser) {
+        setError('The email is already used')
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -57,7 +73,7 @@ export default function SignupPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?type=signup`,
         },
       })
       if (error) throw error
