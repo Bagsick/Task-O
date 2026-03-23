@@ -284,11 +284,19 @@ export async function updateTask(taskId: string, data: any) {
         }
 
         // Log status change activity
+        let activityMsg = `Changed status to ${data.status}`
+        if (data.status === 'completed' && originalTask.status === 'review') activityMsg = 'Approved the task'
+        else if (data.status === 'in_progress' && originalTask.status === 'review') activityMsg = 'Rejected the task'
+        else if (data.status === 'review') activityMsg = 'Submitted task for review'
+        else if (data.status === 'completed') activityMsg = 'Marked task as done'
+        else if (data.status === 'todo') activityMsg = 'Moved task to Pending'
+        else if (data.status === 'in_progress') activityMsg = 'Started working on the task'
+
         await logActivity({
             projectId: originalTask.project_id,
             taskId: taskId,
             type: 'status_change',
-            message: `Changed status from ${originalTask.status} to ${data.status}`,
+            message: activityMsg,
             metadata: { from: originalTask.status, to: data.status }
         })
     } else {

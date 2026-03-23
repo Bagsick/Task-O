@@ -25,8 +25,10 @@ interface TaskDetailDrawerProps {
 export default function TaskDetailDrawer({ task, projectId, onClose, canManage = false }: TaskDetailDrawerProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
-    const [activeTab, setActiveTab] = useState<'all' | 'logs' | 'comments'>('all')
+    const [activeTab, setActiveTab] = useState<'all' | 'logs' | 'comments'>('comments')
     const [newComment, setNewComment] = useState('')
+    const [attachingFile, setAttachingFile] = useState<File | null>(null)
+    const [uploadingAttachment, setUploadingAttachment] = useState(false)
     const [activities, setActivities] = useState<any[]>([])
     const [comments, setComments] = useState<any[]>([])
 
@@ -180,22 +182,53 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
         }
     }
 
-    const handleCommentSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!newComment.trim()) return
+    const handleCommentSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault()
+        if (!newComment.trim() && !attachingFile) return
+        setUploadingAttachment(true)
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
 
-        const { error } = await supabase.from('comments').insert({
-            task_id: task.id,
-            user_id: user.id,
-            content: newComment
-        })
+            let fileMarkdown = ''
+            if (attachingFile) {
+                const fileExt = attachingFile.name.split('.').pop()
+                const safeName = attachingFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '')
+                const filePath = `attachments/${task.id}/${Date.now()}-${safeName}`
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, attachingFile)
 
-        if (!error) {
-            setNewComment('')
-            fetchComments()
+                if (!uploadError) {
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(filePath)
+                    fileMarkdown = (newComment.trim() ? '\n\n' : '') + `[Attachment: ${attachingFile.name}](${publicUrl})`
+                } else {
+                    alert('Failed to upload attachment: ' + uploadError.message)
+                    return
+                }
+            }
+
+            const finalContent = newComment.trim() + fileMarkdown
+
+            const { error } = await supabase.from('comments').insert({
+                task_id: task.id,
+                user_id: user.id,
+                content: finalContent
+            })
+
+            if (!error) {
+                setNewComment('')
+                setAttachingFile(null)
+                fetchComments()
+            }
+        } catch (err: any) {
+            console.error('Comment Error:', err)
+            alert('An error occurred submitting your comment.')
+        } finally {
+            setUploadingAttachment(false)
         }
     }
 
@@ -239,11 +272,11 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                         {/* Execution Details */}
                         <div className="space-y-4">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <FileText size={12} /> Execution Parameters
+                                <FileText size={12} /> Task Description
                             </label>
-                            <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
-                                <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
-                                    &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
+                            <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50">
+                                <p className="text-sm font-medium text-gray-700 dark:text-slate-300 leading-relaxed">
+                                    {task.description || 'No task description provided.'}
                                 </p>
                             </div>
                         </div>
@@ -317,32 +350,39 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             </div>
                         </div>
 
-                        {/* Description Section */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Operational Details</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-[13px] font-bold text-gray-600 dark:text-slate-400 min-h-[100px] leading-relaxed">
-                                {task.description || 'No operational details logged for this objective.'}
-                            </div>
+
+
+                        <div className="flex items-center gap-2 pb-4 border-b border-gray-100 dark:border-slate-800">
+                            {['comments', 'logs'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab as any)}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab
+                                        ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20'
+                                        : 'bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
+                                        }`}
+                                >
+                                    {tab === 'comments' ? 'Comments' : 'Status Logs'}
+                                </button>
+                            ))}
                         </div>
 
                         <div className="space-y-6">
                             {filteredActivity.map((a, idx) => (
                                 <div key={idx} className="flex gap-4 group">
                                     <div className="flex flex-col items-center gap-2">
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
-                                            {a.type === 'comment' ? (
-                                                <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
-                                                    {a.user?.avatar_url ? (
-                                                        <Image
-                                                            src={a.user.avatar_url}
-                                                            alt={a.user.full_name || 'User avatar'}
-                                                            width={32}
-                                                            height={32}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (a.user?.full_name?.[0] || 'U')}
-                                                </div>
-                                            ) : <Shield size={14} />}
+                                        <div className="w-8 h-8 rounded-xl flex items-center justify-center border bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm relative">
+                                            <div className="w-full h-full rounded-xl bg-gray-50 dark:bg-slate-800/50 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
+                                                {a.user?.avatar_url ? (
+                                                    <Image
+                                                        src={a.user.avatar_url}
+                                                        alt={a.user.full_name || 'User avatar'}
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (a.user?.full_name?.[0] || 'U')}
+                                            </div>
                                         </div>
                                         <div className="flex-1 w-px bg-gray-50 dark:bg-slate-800 group-last:hidden" />
                                     </div>
@@ -351,10 +391,77 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                                             <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{a.user?.full_name}</span>
                                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(a.created_at), 'MMM dd')}</span>
                                         </div>
-                                        <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{a.message}</p>
+                                        <div className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-[1.6] whitespace-pre-wrap">
+                                            {a.message.split(/(\[.*?\]\(.*?\))/g).map((part: string, i: number) => {
+                                                const match = part.match(/\[(.*?)\]\((.*?)\)/);
+                                                if (match) {
+                                                    return (
+                                                        <a key={i} href={match[2]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all font-bold mt-1 shadow-sm border border-indigo-100 dark:border-indigo-500/20 w-max">
+                                                            <Paperclip size={10} />
+                                                            {match[1].replace('Attachment: ', '')}
+                                                        </a>
+                                                    );
+                                                }
+                                                return <span key={i}>{part}</span>;
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Comment Input */}
+                        <div className="mt-6">
+                            <form onSubmit={(e) => handleCommentSubmit(e)} className="relative">
+                                <div className="p-1 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-[28px] flex flex-col shadow-inner transition-focus-within focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50">
+                                    <textarea
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        placeholder="Write a comment..."
+                                        className="w-full bg-transparent border-none text-[13px] text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 p-4 pb-2 outline-none resize-none min-h-[60px] max-h-[150px]"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleCommentSubmit();
+                                            }
+                                        }}
+                                    />
+                                    <div className="p-2 flex items-center justify-between gap-2 mt-auto">
+                                        {/* Attachments Section */}
+                                        <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                                            <div className="relative shrink-0 mr-1">
+                                                <label className={`w-9 h-9 rounded-2xl flex items-center justify-center cursor-pointer transition-all ${attachingFile ? 'bg-indigo-100 text-indigo-500 dark:bg-indigo-500/20' : 'bg-white dark:bg-slate-800 text-gray-400 hover:text-indigo-500 border border-gray-200 dark:border-slate-700 shadow-sm'}`}>
+                                                    <Paperclip size={16} />
+                                                    <input
+                                                        type="file"
+                                                        onChange={(e) => e.target.files && setAttachingFile(e.target.files[0])}
+                                                        className="hidden"
+                                                        disabled={uploadingAttachment}
+                                                    />
+                                                </label>
+                                            </div>
+                                            {attachingFile && (
+                                                <div className="relative shrink-0 max-w-[200px]">
+                                                    <div className="px-4 py-2 pr-8 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center gap-2 border border-indigo-100 dark:border-indigo-500/20">
+                                                        <FileText size={12} className="text-indigo-500 shrink-0" />
+                                                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 truncate">{attachingFile.name}</span>
+                                                    </div>
+                                                    <button type="button" onClick={() => setAttachingFile(null)} className="absolute top-1/2 -translate-y-1/2 right-2 w-4 h-4 bg-red-100 dark:bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-all">
+                                                        <X size={10} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={(!newComment.trim() && !attachingFile) || uploadingAttachment}
+                                            className="w-10 h-10 shrink-0 bg-indigo-500 disabled:bg-gray-200 dark:disabled:bg-slate-800 disabled:text-gray-400 dark:disabled:text-slate-600 text-white rounded-2xl flex items-center justify-center shadow-[0_4px_12px_-2px_rgba(99,102,241,0.4)] disabled:shadow-none hover:bg-indigo-600 transition-all active:scale-95 disabled:active:scale-100 cursor-pointer disabled:cursor-not-allowed"
+                                        >
+                                            {uploadingAttachment ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Send size={16} className="ml-0.5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                     {showMoreButton && (
