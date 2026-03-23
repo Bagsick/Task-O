@@ -39,8 +39,22 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // Fetch projects: Include those user is a member of with admin-level roles
-        // We fetch from 'projects' directly to let Supabase RLS handle membership visibility
+        // 1. Fetch user team memberships with roles and associated projects
+        const { data: teamMemberships } = await supabase
+            .from('team_members')
+            .select(`
+                role,
+                team_id,
+                teams (
+                    project_id
+                )
+            `)
+            .eq('user_id', user.id)
+
+        const teamRoles = teamMemberships || []
+        setUserTeams(teamRoles.map(t => t.team_id))
+
+        // 2. Fetch projects: Include those user is a member of
         const { data: projectData } = await supabase
             .from('projects')
             .select(`
@@ -52,30 +66,37 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
 
         const projectList = projectData || []
 
-        setProjects(projectList)
+        // 3. Filter projects where user has create permissions (Admin/Manager/Owner/Tech Lead)
+        // either at project level or via team-level admin role
+        const filteredProjects = projectList.filter(project => {
+            // Is owner?
+            if (project.owner_id === user.id) return true
+
+            // Has project-level admin role?
+            const projectMember = project.project_members?.find((m: any) => m.user_id === user.id)
+            if (projectMember && ['admin', 'manager', 'tech_lead'].includes(projectMember.role)) return true
+
+            // Has team-level admin role in this project?
+            const hasTeamAdmin = teamRoles.some(tr =>
+                (tr as any).teams?.project_id === project.id && ['admin', 'owner'].includes(tr.role)
+            )
+            return hasTeamAdmin
+        })
+
+        setProjects(filteredProjects)
 
         const currentProjectData = projectData?.find((p: any) => p.id === (projectId || initialProjectId))
         const myMemberRecord = currentProjectData?.project_members?.find((m: any) => m.user_id === user.id)
         const currentProjectRole = (myMemberRecord?.role) || 'viewer'
         setUserRole(currentProjectRole.toLowerCase())
 
-        if (currentProjectData) {
-            if (currentProjectData.owner_id) {
-                setProjectOwnerId(currentProjectData.owner_id)
-            }
+        if (currentProjectData?.owner_id) {
+            setProjectOwnerId(currentProjectData.owner_id)
         }
 
-        if (projectList.length > 0 && !projectId && !initialProjectId) {
-            setProjectId(projectList[0].id)
+        if (filteredProjects.length > 0 && !projectId && !initialProjectId) {
+            setProjectId(filteredProjects[0].id)
         }
-
-        // Fetch user teams
-        const { data: teamData } = await supabase
-            .from('team_members')
-            .select('team_id')
-            .eq('user_id', user.id)
-
-        setUserTeams(teamData?.map(t => t.team_id) || [])
         setIsFetchingInitial(false)
     }, [initialProjectId, projectId])
 
