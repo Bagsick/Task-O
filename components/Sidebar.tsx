@@ -203,6 +203,14 @@ export default function Sidebar({ currentUser }: SidebarProps) {
         router.refresh()
     }
 
+    const handleResetTutorials = () => {
+        localStorage.removeItem('hasSeenTutorial')
+        localStorage.removeItem('activeTour')
+        localStorage.removeItem('activeTourStep')
+        // Force reload to clear all states and close modals
+        window.location.reload()
+    }
+
     const navLinkClass = (active: boolean) =>
         `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative group ${active
             ? 'bg-[#f3f4ff] dark:bg-[#0077B6]/10 text-[#0077B6] font-black'
@@ -224,7 +232,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                 />
             )}
 
-            <aside className={`fixed left-0 top-0 h-screen bg-white dark:bg-slate-900 border-r border-gray-300 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 
+            <aside className={`fixed left-0 top-0 h-screen bg-white dark:bg-slate-900 border-r border-gray-300 dark:border-slate-800 transition-all duration-300 flex flex-col z-[60] 
                 ${isMobileOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0'} 
                 ${isCollapsed && !isMobileOpen ? 'lg:w-20' : 'lg:w-64'}
             `}>
@@ -277,8 +285,9 @@ export default function Sidebar({ currentUser }: SidebarProps) {
 
                     {/* Projects (Expandable) */}
                     <div className="space-y-1">
-                        <div className="flex items-center group gap-1">
+                        <div className="flex items-center group">
                             <Link
+                                id="sidebar-projects"
                                 href="/projects"
                                 onClick={() => setIsMobileOpen(false)}
                                 className={`flex-1 ${navLinkClass(pathname.startsWith('/projects') && !currentProjectId)}`}
@@ -293,7 +302,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                                         e.stopPropagation();
                                         setIsProjectsExpanded(!isProjectsExpanded);
                                     }}
-                                    className="p-2 text-gray-400 hover:text-[#0077B6] transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800"
+                                    className="p-2 text-gray-400 hover:text-[#0077B6] transition-colors rounded-xl"
                                 >
                                     <div className={`transition-transform duration-200 ${isProjectsExpanded ? 'rotate-90' : ''}`}>
                                         <ChevronRight size={12} />
@@ -419,6 +428,16 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                             </Link>
                         </div>
                     )}
+
+                    {/* Reset Tutorials */}
+                    <button
+                        onClick={handleResetTutorials}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group text-gray-500 hover:text-[#0077B6] hover:bg-gray-50 dark:hover:bg-slate-800 font-bold mt-4 border-t border-gray-200 dark:border-slate-800 pt-4"
+                        title="Reset all walkthroughs and tutorials"
+                    >
+                        <Play size={18} className="text-gray-400 group-hover:text-[#0077B6] transition-colors" />
+                        {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Reset Tutorials</span>}
+                    </button>
 
                     {/* Logout */}
                     <button
