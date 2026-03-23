@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Plus, Bell, CheckCircle2, Layout, Calendar, Clock, AlertCircle, Users, Sun, Moon, UserPlus } from 'lucide-react'
+import { Plus, Bell, CheckCircle2, Layout, Calendar, Clock, AlertCircle, Users, Sun, Moon, UserPlus, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import CreateTaskModal from './projects/CreateTaskModal'
 import CreateProjectModal from './projects/CreateProjectModal'
@@ -13,6 +13,7 @@ import { format } from 'date-fns'
 import Link from 'next/link'
 import { respondToPlatformInvitation } from '@/lib/users/actions'
 import { useRouter } from 'next/navigation'
+import Modal from './ui/Modal'
 
 interface HeaderActionsProps {
     currentUser: any
@@ -30,6 +31,7 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
     const [notifications, setNotifications] = useState<any[]>([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [mounted, setMounted] = useState(false)
+    const [approvalAlert, setApprovalAlert] = useState<{ title: string; message: string; type: 'success' | 'error' } | null>(null)
     const { theme, setTheme } = useTheme()
     const createDropdownRef = useRef<HTMLDivElement>(null)
     const notificationsDropdownRef = useRef<HTMLDivElement>(null)
@@ -81,8 +83,17 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
                     table: 'notifications',
                     filter: `user_id=eq.${currentUser.id}`,
                 },
-                () => {
+                (payload) => {
                     fetchNotifications()
+
+                    const newNotif = payload.new as any
+                    if (newNotif && newNotif.type === 'task_status_change' && newNotif.message) {
+                        if (newNotif.message.startsWith('Approved:')) {
+                            setApprovalAlert({ title: 'Task Approved', message: newNotif.message, type: 'success' })
+                        } else if (newNotif.message.startsWith('Rejected:')) {
+                            setApprovalAlert({ title: 'Task Rejected', message: newNotif.message, type: 'error' })
+                        }
+                    }
                 }
             )
             .subscribe()
@@ -126,8 +137,10 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
     }
 
     const handleNotificationClick = async (n: any) => {
-        const isInvitation = ['workspace_invite', 'project_invite', 'invite'].includes(n.type)
-        if (!n.read && !isInvitation) await markAsRead(n.id)
+        const isActionable = ['workspace_invite', 'project_invite', 'invite', 'review_required', 'task_assignment', 'assignment'].includes(n.type) ||
+            (n.type === 'task_status_change' && n.message?.toLowerCase().includes('review'))
+
+        if (!n.read && !isActionable) await markAsRead(n.id)
         setIsNotificationsOpen(false)
         router.push('/inbox')
     }
@@ -345,6 +358,28 @@ export default function HeaderActions({ currentUser }: HeaderActionsProps) {
                 isOpen={isTeamModalOpen}
                 onClose={() => setIsTeamModalOpen(false)}
             />
+
+            {/* Global Approval/Rejection Listener Modal */}
+            <Modal
+                isOpen={!!approvalAlert}
+                onClose={() => setApprovalAlert(null)}
+                title={approvalAlert?.title || ''}
+            >
+                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${approvalAlert?.type === 'success' ? 'bg-emerald-50 text-emerald-500 shadow-emerald-500/10' : 'bg-rose-50 text-rose-500 shadow-rose-500/10'}`}>
+                        {approvalAlert?.type === 'success' ? <CheckCircle2 size={32} /> : <X size={32} />}
+                    </div>
+                    <p className="text-md font-bold text-gray-600 dark:text-slate-400 leading-relaxed">
+                        {approvalAlert?.message}
+                    </p>
+                    <button
+                        onClick={() => setApprovalAlert(null)}
+                        className={`mt-4 px-8 py-3 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg ${approvalAlert?.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'}`}
+                    >
+                        Close
+                    </button>
+                </div>
+            </Modal>
         </div>
     )
 }
