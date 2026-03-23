@@ -277,9 +277,8 @@ export default function Sidebar({ currentUser }: SidebarProps) {
 
                     {/* Projects (Expandable) */}
                     <div className="space-y-1">
-                        <div className="flex items-center group">
+                        <div className="flex items-center group gap-1">
                             <Link
-                                id="sidebar-projects"
                                 href="/projects"
                                 onClick={() => setIsMobileOpen(false)}
                                 className={`flex-1 ${navLinkClass(pathname.startsWith('/projects') && !currentProjectId)}`}
@@ -289,8 +288,12 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                             </Link>
                             {(!isCollapsed || isMobileOpen) && (
                                 <button
-                                    onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
-                                    className="p-1 px-2 text-gray-400 hover:text-[#0077B6] transition-colors"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setIsProjectsExpanded(!isProjectsExpanded);
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-[#0077B6] transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800"
                                 >
                                     <div className={`transition-transform duration-200 ${isProjectsExpanded ? 'rotate-90' : ''}`}>
                                         <ChevronRight size={12} />

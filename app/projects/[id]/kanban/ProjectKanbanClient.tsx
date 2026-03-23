@@ -34,6 +34,9 @@ export default function ProjectKanbanClient({ projectId, initialTeamId }: Projec
             .from('tasks')
             .select(`
                 *,
+                teams:team_id (
+                    name
+                ),
                 assignee:assigned_to (
                     id,
                     full_name,

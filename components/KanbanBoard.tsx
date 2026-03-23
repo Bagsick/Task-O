@@ -116,7 +116,8 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
           assignee:assigned_to (
             id,
             full_name,
-            email
+            email,
+            avatar_url
           )
         `)
 
@@ -156,6 +157,32 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
       fetchTasks()
     }
   }, [projectId, teamId, userId, initialTasks, fetchTasks, fetchUserContext])
+
+  // Real-time task syncing
+  useEffect(() => {
+    const channelName = `kanban-board-${projectId || teamId || userId || 'all'}`
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
+          // payload.new is populated on INSERT/UPDATE, payload.old on DELETE
+          const record = payload.new && Object.keys(payload.new).length > 0 ? payload.new : payload.old
+
+          // Basic filtering to prevent unnecessary fetches from other boards
+          if (projectId && record && (record as any).project_id && (record as any).project_id !== projectId) return;
+          if (teamId && record && (record as any).team_id && (record as any).team_id !== teamId) return;
+
+          fetchTasks()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [projectId, teamId, userId, fetchTasks])
 
   // Tutorial Ghost Task Injection
   useEffect(() => {
@@ -248,15 +275,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     }
   }
 
-  const getTeamColor = (teamName: string) => {
-    const colors: Record<string, string> = {
-      'Logistics': 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:border-blue-500/20',
-      'Marketing': 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:border-purple-500/20',
-      'Security': 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:border-red-500/20',
-      'Technical': 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/20'
-    }
-    return colors[teamName] || 'bg-gray-50 text-gray-600 dark:bg-slate-800 dark:border-slate-700'
-  }
+
 
   if (!winReady) return null
 
@@ -321,11 +340,6 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
                                   <div className="flex items-center gap-2">
                                     <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'high' ? 'bg-rose-500' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
                                     <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">{task.priority}</span>
-                                    {task.teams?.name && (
-                                      <span className={`ml-2 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${getTeamColor(task.teams.name)}`}>
-                                        {task.teams.name}
-                                      </span>
-                                    )}
                                   </div>
                                   <div className="flex items-center gap-3">
                                     {task.due_date && (
@@ -333,12 +347,12 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
                                         ? 'bg-red-50 text-red-500 dark:bg-red-500/10'
                                         : 'bg-gray-50 text-gray-400 dark:bg-slate-800'
                                         }`}>
-                                        <Calendar className="h-2.5 w-2.5" />
-                                        {format(new Date(task.due_date), 'MMM dd')}
+                                        <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                        <span className="whitespace-nowrap">{format(new Date(task.due_date), 'MMM dd')}</span>
                                       </div>
                                     )}
                                     {task.assignee && (
-                                      <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[9px] font-black text-[#6366f1] border border-indigo-100 dark:border-indigo-500/20">
+                                      <div className="w-6 h-6 shrink-0 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[9px] font-black text-[#6366f1] border border-indigo-100 dark:border-indigo-500/20">
                                         {task.assignee.full_name?.[0] || 'U'}
                                       </div>
                                     )}
