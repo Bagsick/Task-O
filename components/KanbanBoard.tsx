@@ -67,6 +67,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [userTeams, setUserTeams] = useState<string[]>([])
   const { activeTourId, nextStep, currentStep } = useGuidedTour()
 
   const fetchUserContext = useCallback(async () => {
@@ -82,6 +83,13 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
           .single()
         if (member) setUserRole(member.role)
       }
+
+      // Fetch user teams
+      const { data: teams } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', user.id)
+      setUserTeams(teams?.map(t => t.team_id) || [])
     }
   }, [projectId])
 
@@ -188,6 +196,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager'
     const isTechLead = userRole === 'tech_lead'
     const isMember = userRole === 'member'
+    const isMemberOfTeam = task.team_id ? userTeams.includes(task.team_id) : false
 
     if (isAdmin) {
       // Full access

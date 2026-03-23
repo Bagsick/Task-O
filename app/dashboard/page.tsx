@@ -258,5 +258,5 @@ export default async function DashboardPage() {
       </div>
       <ScrollSuggestion />
     </DashboardProvider>
-  )
+    )
 }
