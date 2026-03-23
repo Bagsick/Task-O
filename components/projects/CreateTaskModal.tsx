@@ -39,35 +39,34 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // Fetch projects
+        // Fetch projects: Include those user is a member of with admin-level roles
+        // We fetch from 'projects' directly with an inner join to ensure RLS visibility and membership
         const { data: projectData } = await supabase
-            .from('project_members')
+            .from('projects')
             .select(`
-                role,
-                projects(
-                    id,
-                    name,
-                    owner_id
-                )
+                id,
+                name,
+                owner_id,
+                project_members!inner(role)
             `)
-            .eq('user_id', user.id)
+            .eq('project_members.user_id', user.id)
 
-        const allowableRoles = ['admin', 'manager', 'owner']
+        const allowableRoles = ['admin', 'manager', 'owner', 'tech_lead']
         const projectList = projectData
-            ?.filter((p: any) => allowableRoles.includes(p.role))
-            ?.map((p: any) => p.projects)
-            .filter(Boolean) || []
+            ?.filter((p: any) => {
+                const role = (p.project_members?.[0]?.role || '').toLowerCase()
+                return allowableRoles.includes(role) || p.owner_id === user.id
+            }) || []
 
         setProjects(projectList)
 
-        const currentProjectData = projectData?.find((p: any) => p.projects?.id === (projectId || initialProjectId))
-        const currentProjectRole = currentProjectData?.role || 'viewer'
+        const currentProjectData = projectData?.find((p: any) => p.id === (projectId || initialProjectId))
+        const currentProjectRole = (currentProjectData?.project_members?.[0]?.role) || 'viewer'
         setUserRole(currentProjectRole)
 
         if (currentProjectData) {
-            const projectsObj = currentProjectData.projects as any
-            if (projectsObj?.owner_id) {
-                setProjectOwnerId(projectsObj.owner_id)
+            if (currentProjectData.owner_id) {
+                setProjectOwnerId(currentProjectData.owner_id)
             }
         }
 
@@ -163,7 +162,7 @@ users: user_id(
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        const canCreate = userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || isTeamAdmin
+        const canCreate = ['admin', 'manager', 'owner', 'tech_lead'].includes(userRole) || isTeamAdmin
         if (!canCreate) {
             setError('You do not have permission to create tasks for this project/team.')
             return
@@ -220,7 +219,7 @@ users: user_id(
     }
 
     const noProjects = !isFetchingInitial && projects.length === 0
-    const canCreate = userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || isTeamAdmin
+    const canCreate = ['admin', 'manager', 'owner', 'tech_lead'].includes(userRole) || isTeamAdmin
 
     return (
         <Modal

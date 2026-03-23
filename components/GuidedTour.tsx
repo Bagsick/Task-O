@@ -776,16 +776,16 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
                 return (
                     <Portal>
                         <div key={activeTourId} className={`fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
-                            {/* THE BACKDROP */}
-                            <div className={`absolute inset-0 transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${step.placement === 'center'
+                            {/* THE BACKDROP - Only blocks if 'center' placement AND it's not fading out */}
+                            <div className={`absolute inset-0 transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${step.placement === 'center' && !isFading
                                 ? 'bg-slate-950/80 dark:bg-slate-950/90 pointer-events-auto'
-                                : 'bg-transparent'
+                                : 'bg-transparent pointer-events-none'
                                 }`} />
 
                             {/* MODE 1: Standard Element Highlight (Only if NOT 'center') */}
                             {step.placement !== 'center' && targetRect && step.targetId && (
                                 <div
-                                    className="absolute border-[3px] border-indigo-500 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
+                                    className="absolute border-[3px] border-indigo-500 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none z-0"
                                     style={{
                                         top: targetRect.top - 4,
                                         left: targetRect.left - 4,
