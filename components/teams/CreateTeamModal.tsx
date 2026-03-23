@@ -24,7 +24,7 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
     const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
     const [invitationEmails, setInvitationEmails] = useState('')
     const [memberLoading, setMemberLoading] = useState(false)
-    const { nextStep, isActive, startTour } = useGuidedTour()
+    const { nextStep, endTour, isActive, startTour } = useGuidedTour()
 
     const [projects, setProjects] = useState<any[]>([])
     const [allMembers, setAllMembers] = useState<any[]>([])
@@ -144,7 +144,10 @@ export default function CreateTeamModal({ isOpen, onClose, initialProjectId, onS
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => {
+                onClose()
+                if (isActive) endTour()
+            }}
             title="Create Team"
             helperText="Group members by function"
             footer={

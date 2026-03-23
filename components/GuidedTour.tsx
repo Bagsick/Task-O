@@ -640,17 +640,12 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
 
                 // Normal action handling (only for 'click')
                 if (currentStep.action === 'click') {
-                    if (currentStep.delay) {
-                        setTimeout(() => {
-                            nextStep()
-                        }, currentStep.delay)
-                    } else if (currentStep.id === 'tour-tasks-tab') {
-                        // For the tasks tab, we want to advance immediately before navigation finishes
-                        // to ensure the tooltip doesn't wait for the new page load
+                    // Small delay ensures navigation or modal closure can begin
+                    // before the tutorial UI shifts, preventing race conditions.
+                    const transitionDelay = currentStep.delay || 150
+                    setTimeout(() => {
                         nextStep()
-                    } else {
-                        nextStep()
-                    }
+                    }, transitionDelay)
                 }
             }
         }
@@ -777,7 +772,7 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
                     <Portal>
                         <div key={activeTourId} className={`fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
                             {/* THE BACKDROP - Only blocks if 'center' placement AND it's not fading out */}
-                            <div className={`absolute inset-0 transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${step.placement === 'center' && !isFading
+                            <div className={`absolute inset-0 transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${step.placement === 'center' && !isFading && (targetRect || step.placement === 'center')
                                 ? 'bg-slate-950/80 dark:bg-slate-950/90 pointer-events-auto'
                                 : 'bg-transparent pointer-events-none'
                                 }`} />

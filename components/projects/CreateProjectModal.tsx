@@ -9,7 +9,7 @@ import { useGuidedTour } from '@/components/GuidedTour'
 
 export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess?: () => void }) {
     const router = useRouter()
-    const { nextStep, isActive } = useGuidedTour()
+    const { nextStep, endTour, isActive } = useGuidedTour()
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [status, setStatus] = useState('planning')
@@ -54,7 +54,10 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: { isO
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => {
+                onClose()
+                if (isActive) endTour()
+            }}
             title="Create Project"
             helperText="Define your project scope and timeline"
             footer={

@@ -29,7 +29,7 @@ export default function InviteMemberModal({ isOpen, onClose, projectId: initialP
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [isFetchingInitial, setIsFetchingInitial] = useState(true)
-    const { nextStep, isActive, startTour } = useGuidedTour()
+    const { nextStep, endTour, isActive, startTour } = useGuidedTour()
 
     const fetchInitialData = useCallback(async () => {
         setIsFetchingInitial(true)
@@ -119,7 +119,10 @@ export default function InviteMemberModal({ isOpen, onClose, projectId: initialP
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => {
+                onClose()
+                if (isActive) endTour()
+            }}
             title="Invite Member"
             helperText="Invite collaborators to your project"
             footer={

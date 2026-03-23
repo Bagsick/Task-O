@@ -203,13 +203,6 @@ export default function Sidebar({ currentUser }: SidebarProps) {
         router.refresh()
     }
 
-    const handleResetTutorials = () => {
-        localStorage.removeItem('hasSeenTutorial')
-        localStorage.removeItem('activeTour')
-        localStorage.removeItem('activeTourStep')
-        // Force reload to clear all states and close modals
-        window.location.reload()
-    }
 
     const navLinkClass = (active: boolean) =>
         `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative group ${active
@@ -429,15 +422,6 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                         </div>
                     )}
 
-                    {/* Reset Tutorials */}
-                    <button
-                        onClick={handleResetTutorials}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group text-gray-500 hover:text-[#0077B6] hover:bg-gray-50 dark:hover:bg-slate-800 font-bold mt-4 border-t border-gray-200 dark:border-slate-800 pt-4"
-                        title="Reset all walkthroughs and tutorials"
-                    >
-                        <Play size={18} className="text-gray-400 group-hover:text-[#0077B6] transition-colors" />
-                        {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Reset Tutorials</span>}
-                    </button>
 
                     {/* Logout */}
                     <button
