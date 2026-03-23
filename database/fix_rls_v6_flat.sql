@@ -97,17 +97,25 @@ WITH CHECK (user_id = auth.uid());
 
 -- 5. TASKS RLS
 CREATE POLICY "Tasks - Select" ON public.tasks FOR SELECT 
-USING (public.is_project_owner(project_id) OR public.is_accepted_project_member(project_id));
+USING (
+    public.is_project_admin_or_manager(project_id) OR 
+    (public.is_accepted_project_member(project_id) AND (team_id IS NULL OR public.is_team_member(team_id)))
+);
 
 CREATE POLICY "Tasks - Modify" ON public.tasks FOR ALL 
-USING (created_by = auth.uid() OR public.is_project_admin_or_manager(project_id));
+USING (
+    created_by = auth.uid() OR 
+    assigned_to = auth.uid() OR 
+    public.is_project_admin_or_manager(project_id) OR
+    (team_id IS NOT NULL AND public.is_team_member(team_id))
+);
 
 -- 6. TEAMS RLS
 CREATE POLICY "Teams - Select" ON public.teams FOR SELECT 
 USING (
     owner_id = auth.uid() OR
     public.is_team_member(id) OR
-    (project_id IS NOT NULL AND (public.is_project_owner(project_id) OR public.is_accepted_project_member(project_id)))
+    (project_id IS NOT NULL AND public.is_project_admin_or_manager(project_id))
 );
 
 CREATE POLICY "Teams - Insert" ON public.teams FOR INSERT 
