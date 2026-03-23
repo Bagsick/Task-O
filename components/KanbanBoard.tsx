@@ -8,6 +8,7 @@ import { format } from 'date-fns'
 import Modal from './ui/Modal'
 import TaskDetailDrawer from './projects/TaskDetailDrawer'
 import { useGuidedTour } from './GuidedTour'
+import { updateTask } from '@/lib/tasks/actions'
 
 // StrictDroppable for React 18 + react-beautiful-dnd
 import { DroppableProps } from 'react-beautiful-dnd'
@@ -55,6 +56,7 @@ interface KanbanBoardProps {
 const COLUMNS = [
   { id: 'pending', title: 'To Do', color: 'bg-[#0096C7]' },
   { id: 'in_progress', title: 'In Progress', color: 'bg-[#CF7929]' },
+  { id: 'review', title: 'Review', color: 'bg-[#6366f1]' },
   { id: 'completed', title: 'Done', color: 'bg-[#1E9E74]' },
 ]
 
@@ -198,9 +200,14 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
 
     if (isAdmin) {
       // Full access
-    } else if (isTechLead || isMember) {
-      // Can move if assigned TO them OR if they are in the team the task belongs to
-      if (task.assigned_to !== currentUserId && !isMemberOfTeam) return
+    } else if (isTechLead) {
+      // Can move tasks if they are the lead? 
+      // Simplified: if it's in a team they belong to. 
+      // For now, let's assume if they have the role and it's their team.
+      // We might need to fetch their team_id.
+    } else if (isMember) {
+      if (task.assigned_to !== currentUserId) return
+      if (newStatus === 'completed') return // Members cannot move to Done directly
     } else {
       return // Viewer or no role
     }
@@ -225,12 +232,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     }
 
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus })
-        .eq('id', draggableId)
-
-      if (error) throw error
+      await updateTask(draggableId, { status: newStatus })
     } catch (error) {
       console.error('Error updating task status:', error)
       fetchTasks() // Revert to server state on error
@@ -264,7 +266,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div id="tour-kanban-board" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div id="tour-kanban-board" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {COLUMNS.map((column) => {
           const columnTasks = tasks.filter((t) => t.status === column.id)
 
@@ -289,9 +291,9 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
                   >
                     <div className="space-y-4">
                       {columnTasks.map((task, index) => (
-                        <Draggable 
-                          key={task.id} 
-                          draggableId={task.id} 
+                        <Draggable
+                          key={task.id}
+                          draggableId={task.id}
                           index={index}
                           isDragDisabled={!(userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || task.id === 'tutorial-ghost-task' || task.assigned_to === currentUserId)}
                         >

@@ -220,7 +220,15 @@ export async function updateTask(taskId: string, data: any) {
             data.status === 'review' ? 'Review' :
                 data.status === 'completed' ? 'Done' : 'Planning'
 
-        const notificationMessage = `Update: ${originalTask.title} is now ${statusLabel}`
+        let notificationMessage = `Update: ${originalTask.title} is now ${statusLabel}`
+
+        if (data.status === 'completed' && originalTask.status === 'review') {
+            notificationMessage = `Approved: ${originalTask.title} was marked as Done`
+        } else if (data.status === 'in_progress' && originalTask.status === 'review') {
+            notificationMessage = `Rejected: ${originalTask.title} needs more work`
+        } else if (data.status === 'review') {
+            notificationMessage = `Review Required: ${originalTask.title} is ready for review`
+        }
 
         const { data: project } = await supabaseAdmin.from('projects').select('name').eq('id', originalTask.project_id).single()
         const metadata = { project_name: project?.name }
@@ -247,6 +255,32 @@ export async function updateTask(taskId: string, data: any) {
                 read: false,
                 metadata
             })
+        }
+
+        // Notify admins/owners when moved to review
+        if (data.status === 'review') {
+            const { data: projectAdmins } = await supabaseAdmin
+                .from('project_members')
+                .select('user_id')
+                .eq('project_id', originalTask.project_id)
+                .in('role', ['admin', 'owner', 'manager'])
+
+            if (projectAdmins) {
+                const notifications = projectAdmins
+                    .filter(a => a.user_id !== user.id && a.user_id !== originalTask.created_by && a.user_id !== originalTask.assigned_to)
+                    .map(a => ({
+                        user_id: a.user_id,
+                        type: 'task_status_change',
+                        message: notificationMessage,
+                        related_id: taskId,
+                        read: false,
+                        metadata
+                    }))
+
+                if (notifications.length > 0) {
+                    await supabaseAdmin.from('notifications').insert(notifications)
+                }
+            }
         }
 
         // Log status change activity

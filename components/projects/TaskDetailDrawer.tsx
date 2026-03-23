@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import ConfirmationModal from '../ui/ConfirmationModal'
+import Modal from '../ui/Modal'
 import EditTaskModal from './EditTaskModal'
 
 interface TaskDetailDrawerProps {
@@ -41,6 +42,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [showMoreButton, setShowMoreButton] = useState(false)
+    const [actionModal, setActionModal] = useState<{ title: string; message: string; type: 'success' | 'error' } | null>(null)
 
     useEffect(() => {
         const el = scrollRef.current?.closest('.custom-scrollbar') || scrollRef.current
@@ -130,7 +132,7 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
         if (task.team_id) fetchTeamInfo()
     }, [task.id, task.team_id, fetchActivities, fetchComments, fetchProjectMembers, fetchUserRole, fetchTeamInfo])
 
-    const handleUpdate = async (updates: any) => {
+    const handleUpdate = async (updates: any, skipClose = false) => {
         if (userRole === 'viewer') return
         setLoading(true)
         const startTime = Date.now()
@@ -140,12 +142,16 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
             const elapsed = Date.now() - startTime
             const delay = Math.max(0, 1700 - elapsed)
 
-            setTimeout(() => {
-                setIsExiting(true)
+            if (!skipClose) {
                 setTimeout(() => {
-                    onClose()
-                }, 300)
-            }, delay)
+                    setIsExiting(true)
+                    setTimeout(() => {
+                        onClose()
+                    }, 300)
+                }, delay)
+            } else {
+                setLoading(false)
+            }
         } catch (error) {
             console.error('Failed to update task:', error)
             setLoading(false)
@@ -230,141 +236,142 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
             <div className="flex-1 relative overflow-hidden flex flex-col">
                 <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
                     <div className="p-0 space-y-6">
-                    {/* Execution Details */}
-                    <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <FileText size={12} /> Execution Parameters
-                        </label>
-                        <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
-                            <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
-                                &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Team Section */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-xs font-bold text-gray-900 dark:text-slate-100">
-                                {formatLabel(teamInfo?.name || task.team?.name || 'No Team')}
+                        {/* Execution Details */}
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <FileText size={12} /> Execution Parameters
+                            </label>
+                            <div className="p-5 bg-gray-50/50 dark:bg-slate-800/30 rounded-3xl border border-gray-50 dark:border-slate-800/50 shadow-inner">
+                                <p className="text-xs font-bold text-gray-600 dark:text-slate-400 leading-relaxed italic">
+                                    &quot;{task.description || 'No detailed mission parameters provided.'}&quot;
+                                </p>
                             </div>
                         </div>
 
-                        {/* Assignee Section */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Assignee</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-slate-100">
-                                <div className="w-5 h-5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[10px] font-black text-indigo-500 shrink-0">
-                                    {task.assignee?.full_name?.[0] || 'U'}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Team Section */}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Team</label>
+                                <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-xs font-bold text-gray-900 dark:text-slate-100">
+                                    {formatLabel(teamInfo?.name || task.team?.name || 'No Team')}
                                 </div>
-                                <span className="truncate">{task.assignee?.full_name || 'Unassigned'}</span>
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Status Section */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-between text-xs font-bold text-gray-900 dark:text-slate-100">
-                                <span className="uppercase tracking-widest">{getStatusLabel(status)}</span>
-                                <div className={`w-2 h-2 rounded-full ${status === 'completed' ? 'bg-emerald-500' :
-                                    status === 'in_progress' ? 'bg-amber-500' :
-                                        'bg-indigo-400'
-                                    } shadow-[0_0_10px_-2px_rgba(0,0,0,0.1)]`} />
-                            </div>
-                        </div>
-
-                        {/* Priority Section */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Priority</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-between text-xs font-bold text-gray-900 dark:text-slate-100">
-                                <span className="uppercase tracking-widest">{formatLabel(priority)}</span>
-                                <Flag size={12} className={
-                                    priority === 'high' ? 'text-rose-500' :
-                                        priority === 'medium' ? 'text-amber-500' :
-                                            'text-indigo-400'
-                                } />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Due Date Section */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Due Date</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center gap-2 text-xs font-bold text-gray-900 dark:text-slate-100">
-                                <Calendar size={14} className="text-gray-400" />
-                                {task.due_date ? format(new Date(task.due_date), 'MMMM dd, yyyy') : 'No Date Set'}
-                            </div>
-                        </div>
-
-                        {/* Task ID / Reference */}
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Reference ID</label>
-                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                <Hash size={12} className="text-gray-400" />
-                                {task.reference_code || task.id.slice(0, 8)}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Description Section */}
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Operational Details</label>
-                        <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-[13px] font-bold text-gray-600 dark:text-slate-400 min-h-[100px] leading-relaxed">
-                            {task.description || 'No operational details logged for this objective.'}
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        {filteredActivity.map((a, idx) => (
-                            <div key={idx} className="flex gap-4 group">
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
-                                        {a.type === 'comment' ? (
-                                            <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
-                                                {a.user?.avatar_url ? (
-                                                    <Image
-                                                        src={a.user.avatar_url}
-                                                        alt={a.user.full_name || 'User avatar'}
-                                                        width={32}
-                                                        height={32}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (a.user?.full_name?.[0] || 'U')}
-                                            </div>
-                                        ) : <Shield size={14} />}
+                            {/* Assignee Section */}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Assignee</label>
+                                <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-slate-100">
+                                    <div className="w-5 h-5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[10px] font-black text-indigo-500 shrink-0">
+                                        {task.assignee?.full_name?.[0] || 'U'}
                                     </div>
-                                    <div className="flex-1 w-px bg-gray-50 dark:bg-slate-800 group-last:hidden" />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{a.user?.full_name}</span>
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(a.created_at), 'MMM dd')}</span>
-                                    </div>
-                                    <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{a.message}</p>
+                                    <span className="truncate">{task.assignee?.full_name || 'Unassigned'}</span>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Status Section */}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
+                                <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-between text-xs font-bold text-gray-900 dark:text-slate-100">
+                                    <span className="uppercase tracking-widest">{getStatusLabel(status)}</span>
+                                    <div className={`w-2 h-2 rounded-full ${status === 'completed' ? 'bg-emerald-500' :
+                                        status === 'in_progress' ? 'bg-amber-500' :
+                                            status === 'review' ? 'bg-indigo-500' :
+                                                'bg-sky-400'
+                                        } shadow-[0_0_10px_-2px_rgba(0,0,0,0.1)]`} />
+                                </div>
+                            </div>
+
+                            {/* Priority Section */}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Priority</label>
+                                <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-between text-xs font-bold text-gray-900 dark:text-slate-100">
+                                    <span className="uppercase tracking-widest">{formatLabel(priority)}</span>
+                                    <Flag size={12} className={
+                                        priority === 'high' ? 'text-rose-500' :
+                                            priority === 'medium' ? 'text-amber-500' :
+                                                'text-indigo-400'
+                                    } />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Due Date Section */}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Due Date</label>
+                                <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center gap-2 text-xs font-bold text-gray-900 dark:text-slate-100">
+                                    <Calendar size={14} className="text-gray-400" />
+                                    {task.due_date ? format(new Date(task.due_date), 'MMMM dd, yyyy') : 'No Date Set'}
+                                </div>
+                            </div>
+
+                            {/* Task ID / Reference */}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Reference ID</label>
+                                <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                    <Hash size={12} className="text-gray-400" />
+                                    {task.reference_code || task.id.slice(0, 8)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Description Section */}
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest ml-1">Operational Details</label>
+                            <div className="w-full px-5 py-3 bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl text-[13px] font-bold text-gray-600 dark:text-slate-400 min-h-[100px] leading-relaxed">
+                                {task.description || 'No operational details logged for this objective.'}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {filteredActivity.map((a, idx) => (
+                                <div key={idx} className="flex gap-4 group">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${a.type === 'comment' ? 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm' : 'bg-gray-50 dark:bg-slate-800/50 border-transparent text-gray-400'}`}>
+                                            {a.type === 'comment' ? (
+                                                <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-[10px] font-black text-indigo-500 uppercase">
+                                                    {a.user?.avatar_url ? (
+                                                        <Image
+                                                            src={a.user.avatar_url}
+                                                            alt={a.user.full_name || 'User avatar'}
+                                                            width={32}
+                                                            height={32}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (a.user?.full_name?.[0] || 'U')}
+                                                </div>
+                                            ) : <Shield size={14} />}
+                                        </div>
+                                        <div className="flex-1 w-px bg-gray-50 dark:bg-slate-800 group-last:hidden" />
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] font-black text-gray-900 dark:text-slate-100 uppercase tracking-tight">{a.user?.full_name}</span>
+                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(a.created_at), 'MMM dd')}</span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{a.message}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
+                    {showMoreButton && (
+                        <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
+                            <button
+                                onClick={() => {
+                                    const el = scrollRef.current?.closest('.custom-scrollbar') || scrollRef.current
+                                    el?.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+                                }}
+                                className="bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md border border-gray-100/10 dark:border-slate-800/80 px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-100 hover:scale-105 transition-all shadow-xl shadow-indigo-500/5 animate-bounce"
+                            >
+                                <ChevronDown size={14} className="text-indigo-500" />
+                                More Contents Below
+                            </button>
+                        </div>
+                    )}
                 </div>
-                {showMoreButton && (
-                    <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
-                        <button 
-                            onClick={() => {
-                                const el = scrollRef.current?.closest('.custom-scrollbar') || scrollRef.current
-                                el?.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-                            }}
-                            className="bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md border border-gray-100/10 dark:border-slate-800/80 px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-100 hover:scale-105 transition-all shadow-xl shadow-indigo-500/5 animate-bounce"
-                        >
-                            <ChevronDown size={14} className="text-indigo-500" />
-                            More Contents Below
-                        </button>
-                    </div>
-                )}
-            </div>
             </div>
 
             {/* Admin Actions */}
@@ -426,12 +433,12 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             Start Doing
                         </button>
                         <button
-                            onClick={() => { setStatus('completed'); handleUpdate({ status: 'completed' }) }}
+                            onClick={() => { setStatus('review'); handleUpdate({ status: 'review' }) }}
                             disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
-                            className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 disabled:opacity-50"
+                            className="flex-1 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-98 disabled:opacity-50"
                         >
                             <CheckCircle2 size={14} />
-                            Mark as Done
+                            Submit for Review
                         </button>
                     </>
                 )}
@@ -447,14 +454,50 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                             Revert to Todo
                         </button>
                         <button
-                            onClick={() => { setStatus('completed'); handleUpdate({ status: 'completed' }) }}
+                            onClick={() => { setStatus('review'); handleUpdate({ status: 'review' }) }}
                             disabled={userRole === 'viewer' || (userRole === 'member' && task.assigned_to !== currentUserId && !canManage)}
-                            className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 disabled:opacity-50"
+                            className="flex-1 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-98 disabled:opacity-50"
                         >
                             <CheckCircle2 size={14} />
-                            Mark as Done
+                            Submit for Review
                         </button>
                     </>
+                )}
+
+                {status === 'review' && (
+                    (userRole === 'admin' || userRole === 'owner' || userRole === 'manager' || canManage || task.created_by === currentUserId) ? (
+                        <>
+                            <button
+                                disabled={loading}
+                                onClick={async () => {
+                                    setStatus('in_progress');
+                                    await handleUpdate({ status: 'in_progress' }, true);
+                                    setActionModal({ title: 'Task Rejected', message: 'The task has been rejected and moved back to In Progress.', type: 'error' })
+                                }}
+                                className="flex-1 py-3.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/10 hover:shadow-rose-500/20 active:scale-98 disabled:opacity-50"
+                            >
+                                <X size={14} />
+                                Reject Task
+                            </button>
+                            <button
+                                disabled={loading}
+                                onClick={async () => {
+                                    setStatus('completed');
+                                    await handleUpdate({ status: 'completed' }, true);
+                                    setActionModal({ title: 'Task Approved', message: 'The task has been successfully approved and moved to Done.', type: 'success' })
+                                }}
+                                className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 disabled:opacity-50"
+                            >
+                                <CheckCircle2 size={14} />
+                                Approve & Done
+                            </button>
+                        </>
+                    ) : (
+                        <div className="w-full py-3.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-indigo-100 dark:border-indigo-500/20">
+                            <Shield size={14} />
+                            Pending Admin Review
+                        </div>
+                    )
                 )}
 
                 {status === 'completed' && (
@@ -468,6 +511,40 @@ export default function TaskDetailDrawer({ task, projectId, onClose, canManage =
                     </button>
                 )}
             </div>
+
+            {/* Action Feedback Modal */}
+            <Modal
+                isOpen={!!actionModal}
+                onClose={() => {
+                    setActionModal(null)
+                    setIsExiting(true)
+                    setTimeout(() => {
+                        onClose()
+                    }, 300)
+                }}
+                title={actionModal?.title || ''}
+            >
+                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${actionModal?.type === 'success' ? 'bg-emerald-50 text-emerald-500 shadow-emerald-500/10' : 'bg-rose-50 text-rose-500 shadow-rose-500/10'}`}>
+                        {actionModal?.type === 'success' ? <CheckCircle2 size={32} /> : <X size={32} />}
+                    </div>
+                    <p className="text-md font-bold text-gray-600 dark:text-slate-400 leading-relaxed">
+                        {actionModal?.message}
+                    </p>
+                    <button
+                        onClick={() => {
+                            setActionModal(null)
+                            setIsExiting(true)
+                            setTimeout(() => {
+                                onClose()
+                            }, 300)
+                        }}
+                        className={`mt-4 px-8 py-3 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg ${actionModal?.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'}`}
+                    >
+                        Close
+                    </button>
+                </div>
+            </Modal>
         </div >
     )
 }

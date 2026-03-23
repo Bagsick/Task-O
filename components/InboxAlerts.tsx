@@ -5,12 +5,13 @@ import {
     Bell, AtSign, Briefcase, UserPlus, Info,
     Search, Filter, CheckCircle2, MoreVertical,
     Check, Play, Reply, RotateCcw, Settings, ChevronDown,
-    Eye, Clock
+    Eye, Clock, X
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { updateTask } from '@/lib/tasks/actions'
+import Modal from './ui/Modal'
 
 interface Notification {
     id: string
@@ -36,6 +37,7 @@ export default function InboxAlerts({ notifications: initialNotifications }: Inb
     const [unreadOnly, setUnreadOnly] = useState(false)
     const [processingId, setProcessingId] = useState<string | null>(null)
     const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+    const [actionModal, setActionModal] = useState<{ title: string; message: string; type: 'success' | 'error' } | null>(null)
     const router = useRouter()
 
     const handleAction = async (notifId: string, action: string, taskId?: string) => {
@@ -48,6 +50,7 @@ export default function InboxAlerts({ notifications: initialNotifications }: Inb
                     break
                 case 'approve':
                     await updateTask(taskId, { status: 'completed' })
+                    setActionModal({ title: 'Task Approved', message: 'The task has been successfully approved and moved to Done.', type: 'success' })
                     break
                 case 'reopen':
                     await updateTask(taskId, { status: 'todo' })
@@ -56,6 +59,18 @@ export default function InboxAlerts({ notifications: initialNotifications }: Inb
                 case 'reject':
                     const { respondToPlatformInvitation } = await import('@/lib/users/actions')
                     await respondToPlatformInvitation(taskId, action === 'accept')
+                    break
+                case 'reject_task':
+                    await updateTask(taskId, { status: 'in_progress' })
+                    setActionModal({ title: 'Task Rejected', message: 'The task has been rejected and moved back to In Progress.', type: 'error' })
+                    break
+                case 'view_task':
+                    const { data: taskData } = await supabase.from('tasks').select('project_id').eq('id', taskId).single()
+                    if (taskData) {
+                        await supabase.from('notifications').update({ read: true }).eq('id', notifId)
+                        router.push(`/projects/${taskData.project_id}/kanban`)
+                        return
+                    }
                     break
                 default:
                     break
@@ -223,13 +238,22 @@ export default function InboxAlerts({ notifications: initialNotifications }: Inb
                                             </button>
                                         )}
                                         {isReview && (
-                                            <button
-                                                disabled={!!processingId}
-                                                onClick={() => handleAction(notif.id, 'approve', notif.related_id)}
-                                                className="flex-1 sm:flex-none px-4 md:px-8 py-2 md:py-2.5 bg-[#6366f1] text-white rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-[#5558e3] transition-all shadow-lg shadow-[#6366f1]/20 active:scale-95 disabled:opacity-50"
-                                            >
-                                                Approve
-                                            </button>
+                                            <>
+                                                <button
+                                                    disabled={!!processingId}
+                                                    onClick={() => handleAction(notif.id, 'reject_task', notif.related_id)}
+                                                    className="flex-1 sm:flex-none px-4 md:px-8 py-2 md:py-2.5 bg-rose-500 text-white rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 active:scale-95 disabled:opacity-50"
+                                                >
+                                                    Reject
+                                                </button>
+                                                <button
+                                                    disabled={!!processingId}
+                                                    onClick={() => handleAction(notif.id, 'approve', notif.related_id)}
+                                                    className="flex-1 sm:flex-none px-4 md:px-8 py-2 md:py-2.5 bg-[#6366f1] text-white rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-[#5558e3] transition-all shadow-lg shadow-[#6366f1]/20 active:scale-95 disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </>
                                         )}
                                         {config.label === 'Invitation' && (
                                             <>
@@ -251,6 +275,12 @@ export default function InboxAlerts({ notifications: initialNotifications }: Inb
                                         )}
                                         {config.label !== 'Invitation' && (
                                             <button
+                                                onClick={() => {
+                                                    if (notif.related_id && (isTask || isReview || notif.type === 'task_status_change')) {
+                                                        handleAction(notif.id, 'view_task', notif.related_id)
+                                                    }
+                                                }}
+                                                disabled={!!processingId}
                                                 className="flex-1 sm:flex-none px-4 md:px-8 py-2 md:py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2"
                                             >
                                                 <Eye size={12} /> View
@@ -273,6 +303,28 @@ export default function InboxAlerts({ notifications: initialNotifications }: Inb
                     </div>
                 )}
             </div>
+
+            {/* Action Feedback Modal */}
+            <Modal
+                isOpen={!!actionModal}
+                onClose={() => setActionModal(null)}
+                title={actionModal?.title || ''}
+            >
+                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${actionModal?.type === 'success' ? 'bg-emerald-50 text-emerald-500 shadow-emerald-500/10' : 'bg-rose-50 text-rose-500 shadow-rose-500/10'}`}>
+                        {actionModal?.type === 'success' ? <CheckCircle2 size={32} /> : <X size={32} />}
+                    </div>
+                    <p className="text-md font-bold text-gray-600 dark:text-slate-400 leading-relaxed">
+                        {actionModal?.message}
+                    </p>
+                    <button
+                        onClick={() => setActionModal(null)}
+                        className={`mt-4 px-8 py-3 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg ${actionModal?.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'}`}
+                    >
+                        Close
+                    </button>
+                </div>
+            </Modal>
         </div>
     )
 }
