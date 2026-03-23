@@ -32,6 +32,9 @@ export default async function ProjectTasksPage({
         .from('tasks')
         .select(`
       *,
+      teams:team_id (
+        name
+      ),
       assignee:assigned_to (
         id,
         full_name,
