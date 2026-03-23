@@ -40,29 +40,24 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
         if (!user) return
 
         // Fetch projects: Include those user is a member of with admin-level roles
-        // We fetch from 'projects' directly with an inner join to ensure RLS visibility and membership
+        // We fetch from 'projects' directly to let Supabase RLS handle membership visibility
         const { data: projectData } = await supabase
             .from('projects')
             .select(`
                 id,
                 name,
                 owner_id,
-                project_members!inner(role)
+                project_members(role, user_id)
             `)
-            .eq('project_members.user_id', user.id)
 
-        const allowableRoles = ['admin', 'manager', 'owner', 'tech_lead']
-        const projectList = projectData
-            ?.filter((p: any) => {
-                const role = (p.project_members?.[0]?.role || '').toLowerCase()
-                return allowableRoles.includes(role) || p.owner_id === user.id
-            }) || []
+        const projectList = projectData || []
 
         setProjects(projectList)
 
         const currentProjectData = projectData?.find((p: any) => p.id === (projectId || initialProjectId))
-        const currentProjectRole = (currentProjectData?.project_members?.[0]?.role) || 'viewer'
-        setUserRole(currentProjectRole)
+        const myMemberRecord = currentProjectData?.project_members?.find((m: any) => m.user_id === user.id)
+        const currentProjectRole = (myMemberRecord?.role) || 'viewer'
+        setUserRole(currentProjectRole.toLowerCase())
 
         if (currentProjectData) {
             if (currentProjectData.owner_id) {
