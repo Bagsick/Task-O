@@ -25,7 +25,7 @@ export default function CreateTaskModal({ isOpen, onClose, initialProjectId, ini
     const [isTeamAdmin, setIsTeamAdmin] = useState(false)
     const [projectOwnerId, setProjectOwnerId] = useState<string | null>(null)
     const [members, setMembers] = useState<any[]>([])
-    const { nextStep, isActive, startTour } = useGuidedTour()
+    const { nextStep, endTour, isActive, startTour } = useGuidedTour()
     const [userRole, setUserRole] = useState<string>('viewer')
     const [userTeams, setUserTeams] = useState<string[]>([])
     const [status, setStatus] = useState(initialStatus || 'pending')
@@ -240,7 +240,10 @@ users: user_id(
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => {
+                onClose()
+                if (isActive) endTour()
+            }}
             title="New Task"
             helperText="Define task details and responsibility"
             footer={
