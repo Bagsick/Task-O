@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import AuthErrorBanner from '@/components/AuthErrorBanner'
+import { normalizeEmail } from '@/lib/utils/email'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,8 +28,9 @@ export default function LoginPage() {
     setError('')
 
     try {
+      const normalizedEmail = normalizeEmail(email)
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       })
 
