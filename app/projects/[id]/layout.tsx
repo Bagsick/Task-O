@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import ProjectNav from '@/components/projects/ProjectNav'
 import ProjectHeader from '@/components/projects/ProjectHeader'
+import PresenceBar from '@/components/PresenceBar'
 
 export default async function ProjectLayout({
     children,
@@ -62,7 +63,10 @@ export default async function ProjectLayout({
                         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:gap-6">
                             <ProjectHeader projectName={project.name} projectDescription={project.description} />
 
-                            <ProjectNav projectId={id} role={userRole} />
+                            <div className="flex flex-col items-end gap-4">
+                                <PresenceBar projectId={id} currentUser={user} />
+                                <ProjectNav projectId={id} role={userRole} />
+                            </div>
                         </div>
                     </div>
 

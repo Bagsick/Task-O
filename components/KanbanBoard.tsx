@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { supabase } from '@/lib/supabase/client'
 import { Calendar, User } from 'lucide-react'
@@ -8,7 +8,9 @@ import { format } from 'date-fns'
 import Modal from './ui/Modal'
 import TaskDetailDrawer from './projects/TaskDetailDrawer'
 import { useGuidedTour } from './GuidedTour'
-import { updateTask } from '@/lib/tasks/actions'
+import { updateTask, bulkUpdateTaskStatus } from '@/lib/tasks/actions'
+import BulkActionBar from './tasks/BulkActionBar'
+import { Check } from 'lucide-react'
 
 // StrictDroppable for React 18 + react-beautiful-dnd
 import { DroppableProps } from 'react-beautiful-dnd'
@@ -68,6 +70,9 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
   const [userRole, setUserRole] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [userTeams, setUserTeams] = useState<string[]>([])
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const isDraggingRef = useRef(false)
   const { activeTourId, nextStep, currentStep } = useGuidedTour()
 
   const fetchUserContext = useCallback(async () => {
@@ -203,9 +208,19 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     }
   }, [activeTourId, loading])
 
+  const onDragStart = (start: any) => {
+    isDraggingRef.current = true
+    setDraggingId(start.draggableId)
+  }
+
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result
 
+    // Reset dragging state with a tiny delay to prevent the click event from firing
+    setTimeout(() => {
+      isDraggingRef.current = false
+    }, 100)
+    setDraggingId(null)
     if (!destination) return
 
     if (
@@ -219,54 +234,71 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     const task = tasks.find((t) => t.id === draggableId)
     if (!task) return
 
+    // Check if we're dragging a selected task
+    const isSelected = selectedTaskIds.includes(draggableId)
+    const taskIdsToUpdate = isSelected ? selectedTaskIds : [draggableId]
+
     // Role-based validation
     const isAdmin = userRole === 'admin' || userRole === 'owner' || userRole === 'manager'
     const isTechLead = userRole === 'tech_lead'
     const isMember = userRole === 'member'
-    const isMemberOfTeam = task.team_id ? userTeams.includes(task.team_id) : false
 
-    if (isAdmin) {
-      // Full access
-    } else if (isTechLead) {
-      // Can move tasks if they are the lead? 
-      // Simplified: if it's in a team they belong to. 
-      // For now, let's assume if they have the role and it's their team.
-      // We might need to fetch their team_id.
-    } else if (isMember) {
+    // Simplified validation for bulk move: check each task or trust the selection logic?
+    // Let's ensure role-based rules apply.
+    if (isMember && newStatus === 'completed') return // Members cannot move to Done directly
+
+    if (!isAdmin && !isTechLead && isMember && !isSelected) {
       if (task.assigned_to !== currentUserId) return
-      if (newStatus === 'completed') return // Members cannot move to Done directly
-    } else {
-      return // Viewer or no role
+    } else if (!isAdmin && !isTechLead && !isMember) {
+      return // Viewer
     }
 
     // Optimistic update
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
-        t.id === draggableId ? { ...t, status: newStatus } : t
+        taskIdsToUpdate.includes(t.id) ? { ...t, status: newStatus } : t
       )
     )
 
     // Unified Drag-and-Drop handling
     if (draggableId === 'tutorial-ghost-task') {
       if (destination.droppableId === 'in_progress' && task.status === 'pending') {
-        setTasks((prev) => prev.map(t => t.id === draggableId ? { ...t, status: 'in_progress' } : t))
-        nextStep() // Advance tutorial to "Submit for Review"
+        nextStep()
       } else if (destination.droppableId === 'review' && task.status === 'in_progress') {
-        setTasks((prev) => prev.map(t => t.id === draggableId ? { ...t, status: 'review' } : t))
-        nextStep() // Advance tutorial to "Complete the objective"
+        nextStep()
       } else if (destination.droppableId === 'completed' && task.status === 'review') {
-        setTasks((prev) => prev.map(t => t.id === draggableId ? { ...t, status: 'completed' } : t))
-        nextStep() // Advance tutorial to final step
+        nextStep()
       }
       return // Don't sync to DB
     }
 
     try {
-      await updateTask(draggableId, { status: newStatus })
+      if (isSelected) {
+        await bulkUpdateTaskStatus(taskIdsToUpdate, newStatus, projectId || '')
+        clearSelection()
+      } else {
+        await updateTask(draggableId, { status: newStatus })
+      }
     } catch (error) {
       console.error('Error updating task status:', error)
       fetchTasks() // Revert to server state on error
     }
+  }
+
+  const toggleTaskSelection = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent opening task details
+    setSelectedTaskIds(prev =>
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    )
+  }
+
+  const clearSelection = () => setSelectedTaskIds([])
+
+  const onBulkActionSuccess = () => {
+    clearSelection()
+    fetchTasks()
   }
 
   const getPriorityColor = (priority: string) => {
@@ -287,7 +319,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
   }
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
       <div id="tour-kanban-board" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {COLUMNS.map((column) => {
           const columnTasks = tasks.filter((t) => t.status === column.id)
@@ -317,53 +349,92 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
                           key={task.id}
                           draggableId={task.id}
                           index={index}
-                          isDragDisabled={!(userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || task.id === 'tutorial-ghost-task' || task.assigned_to === currentUserId)}
+                          isDragDisabled={!(userRole === 'admin' || userRole === 'manager' || userRole === 'owner' || task.id === 'tutorial-ghost-task' || task.assigned_to === currentUserId || selectedTaskIds.includes(task.id))}
                         >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              id={task.id}
-                              className={`group bg-white dark:bg-slate-950 p-6 rounded-[28px] shadow-sm ${getPriorityColor(
-                                task.priority
-                              )} ${snapshot.isDragging ? 'shadow-2xl rotate-2 scale-105 ring-2 ring-[#6366f1]/20' : ''} border border-gray-100 dark:border-slate-800 transition-all hover:border-[#6366f1]/30 cursor-pointer`}
-                              onClick={() => task.id !== 'tutorial-ghost-task' && setSelectedTask(task)}
-                            >
-                              <div className="flex flex-col gap-3">
-                                <h4 className="text-[14px] font-black text-gray-900 dark:text-slate-100 mb-1 leading-tight group-hover:text-[#6366f1] transition-colors uppercase tracking-tightest">
-                                  {task.title}
-                                </h4>
-                                {task.description && (
-                                  <p className="text-[11px] text-gray-400 dark:text-slate-500 line-clamp-2 italic leading-relaxed font-bold">
-                                    {task.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-50 dark:border-slate-800/50">
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'high' ? 'bg-rose-500' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
-                                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">{task.priority}</span>
+                          {(provided, snapshot) => {
+                            const isSelected = selectedTaskIds.includes(task.id)
+                            const isDraggingOthersFromSelection = !!draggingId && isSelected && draggingId !== task.id && selectedTaskIds.includes(draggingId)
+
+                            return (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                id={task.id}
+                                className={`group bg-white dark:bg-slate-950 p-6 rounded-[28px] shadow-sm ${getPriorityColor(
+                                  task.priority
+                                )} ${isSelected && !snapshot.isDragging ? 'rotate-[1deg] ring-1 ring-white/10' : ''} ${snapshot.isDragging ? 'shadow-2xl rotate-2 scale-105 z-50' : ''} border border-gray-100 dark:border-slate-800 transition-all hover:border-[#6366f1]/30 cursor-pointer relative`}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  opacity: isDraggingOthersFromSelection ? 0 : 1,
+                                  pointerEvents: isDraggingOthersFromSelection ? 'none' : 'auto',
+                                }}
+                                onClick={() => {
+                                  if (isDraggingRef.current) return
+                                  if (task.id !== 'tutorial-ghost-task') setSelectedTask(task)
+                                }}
+                              >
+                                {/* Selection Checkbox */}
+                                {task.id !== 'tutorial-ghost-task' && (
+                                  <div
+                                    onClick={(e) => toggleTaskSelection(task.id, e)}
+                                    className={`absolute top-4 right-4 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all z-20 ${isSelected
+                                      ? 'bg-[#6366f1] border-[#6366f1] text-white'
+                                      : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 opacity-0 group-hover:opacity-100'
+                                      }`}
+                                  >
+                                    {isSelected && <Check size={14} strokeWidth={4} />}
                                   </div>
-                                  <div className="flex items-center gap-3">
-                                    {task.due_date && (
-                                      <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${new Date(task.due_date) < new Date() && task.status !== 'completed'
-                                        ? 'bg-red-50 text-red-500 dark:bg-red-500/10'
-                                        : 'bg-gray-50 text-gray-400 dark:bg-slate-800'
-                                        }`}>
-                                        <Calendar className="h-2.5 w-2.5 shrink-0" />
-                                        <span className="whitespace-nowrap">{format(new Date(task.due_date), 'MMM dd')}</span>
-                                      </div>
-                                    )}
-                                    {task.assignee && (
-                                      <div className="w-6 h-6 shrink-0 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[9px] font-black text-[#6366f1] border border-indigo-100 dark:border-indigo-500/20">
-                                        {task.assignee.full_name?.[0] || 'U'}
-                                      </div>
-                                    )}
+                                )}
+
+                                {/* Multi-drag Building / Stack Visuals */}
+                                {snapshot.isDragging && selectedTaskIds.length > 1 && isSelected && (
+                                  <>
+                                    <div className="absolute inset-0 translate-x-3 translate-y-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[28px] -z-10 shadow-lg" />
+                                    <div className="absolute inset-0 translate-x-6 translate-y-6 bg-white dark:bg-slate-950 border border-gray-300 dark:border-slate-900 rounded-[28px] -z-20 shadow-xl" />
+
+                                    {/* Multi-drag badge */}
+                                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#6366f1] text-white flex items-center justify-center text-xs font-black shadow-lg z-[60] animate-bounce">
+                                      {selectedTaskIds.length}
+                                    </div>
+                                  </>
+                                )}
+
+                                <div className="flex flex-col gap-3">
+                                  <h4 className="text-[14px] font-black text-gray-900 dark:text-slate-100 mb-1 leading-tight group-hover:text-[#6366f1] transition-colors uppercase tracking-tightest">
+                                    {task.title}
+                                  </h4>
+                                  {task.description && (
+                                    <p className="text-[11px] text-gray-400 dark:text-slate-500 line-clamp-2 italic leading-relaxed font-bold">
+                                      {task.description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-50 dark:border-slate-800/50">
+                                    <div className="flex items-center gap-2">
+                                      <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'high' ? 'bg-rose-500' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">{task.priority}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      {task.due_date && (
+                                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${new Date(task.due_date) < new Date() && task.status !== 'completed'
+                                          ? 'bg-red-50 text-red-500 dark:bg-red-500/10'
+                                          : 'bg-gray-50 text-gray-400 dark:bg-slate-800'
+                                          }`}>
+                                          <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                          <span className="whitespace-nowrap">{format(new Date(task.due_date), 'MMM dd')}</span>
+                                        </div>
+                                      )}
+                                      {task.assignee && (
+                                        <div className="w-6 h-6 shrink-0 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-[9px] font-black text-[#6366f1] border border-indigo-100 dark:border-indigo-500/20">
+                                          {task.assignee.full_name?.[0] || 'U'}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            )
+                          }}
                         </Draggable>
                       ))}
                     </div>
@@ -390,6 +461,15 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
           />
         )}
       </Modal>
+
+      {selectedTaskIds.length > 0 && (
+        <BulkActionBar
+          selectedIds={selectedTaskIds}
+          projectId={projectId || ''}
+          onClear={clearSelection}
+          onSuccess={onBulkActionSuccess}
+        />
+      )}
     </DragDropContext>
   )
 }
