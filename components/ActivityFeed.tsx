@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -27,9 +27,57 @@ interface Activity {
     }
 }
 
-export default function ActivityFeed({ projectId }: { projectId: string }) {
+export default function ActivityFeed({ projectId, userTeamIds }: { projectId: string, userTeamIds?: string[] }) {
     const [activities, setActivities] = useState<Activity[]>([])
     const [loading, setLoading] = useState(true)
+
+    const fetchActivities = useCallback(async () => {
+        // If userTeamIds is provided (admin case), filter activities by tasks belonging to those teams
+        if (userTeamIds && userTeamIds.length > 0) {
+            // First get task_ids that belong to the admin's teams
+            const { data: teamTasks } = await supabase
+                .from('tasks')
+                .select('id')
+                .eq('project_id', projectId)
+                .in('team_id', userTeamIds)
+
+            const taskIds = teamTasks?.map(t => t.id) || []
+
+            // Fetch activities that are either general (no task_id) or related to those tasks
+            const { data } = await supabase
+                .from('activities')
+                .select(`
+                    *,
+                    user:user_id (
+                        full_name,
+                        avatar_url
+                    )
+                `)
+                .eq('project_id', projectId)
+                .or(taskIds.length > 0 ? `task_id.in.(${taskIds.join(',')}),task_id.is.null` : 'task_id.is.null')
+                .order('created_at', { ascending: false })
+                .limit(50)
+
+            if (data) setActivities(data as any)
+        } else {
+            // Owner sees everything
+            const { data } = await supabase
+                .from('activities')
+                .select(`
+                    *,
+                    user:user_id (
+                        full_name,
+                        avatar_url
+                    )
+                `)
+                .eq('project_id', projectId)
+                .order('created_at', { ascending: false })
+                .limit(50)
+
+            if (data) setActivities(data as any)
+        }
+        setLoading(false)
+    }, [projectId, userTeamIds])
 
     useEffect(() => {
         fetchActivities()
@@ -45,8 +93,7 @@ export default function ActivityFeed({ projectId }: { projectId: string }) {
                     table: 'activities',
                     filter: `project_id=eq.${projectId}`
                 },
-                (payload) => {
-                    // Fetch the user data for the new activity
+                () => {
                     fetchActivities()
                 }
             )
@@ -55,25 +102,7 @@ export default function ActivityFeed({ projectId }: { projectId: string }) {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [projectId])
-
-    const fetchActivities = async () => {
-        const { data, error } = await supabase
-            .from('activities')
-            .select(`
-                *,
-                user:user_id (
-                    full_name,
-                    avatar_url
-                )
-            `)
-            .eq('project_id', projectId)
-            .order('created_at', { ascending: false })
-            .limit(50)
-
-        if (data) setActivities(data as any)
-        setLoading(false)
-    }
+    }, [projectId, fetchActivities])
 
     const getActivityIcon = (type: string) => {
         switch (type) {

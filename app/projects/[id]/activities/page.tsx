@@ -28,10 +28,21 @@ export default async function ActivitiesPage({ params }: { params: { id: string 
         .single()
 
     const userRole = membership?.role || (project?.owner_id === user.id ? 'owner' : 'member')
-    const isAdmin = userRole === 'admin' || userRole === 'owner'
+    const isAllowed = userRole === 'admin' || userRole === 'owner'
 
-    if (!isAdmin) {
+    if (!isAllowed) {
         redirect(`/projects/${projectId}`)
+    }
+
+    // For admins, fetch their team IDs so we can filter activities
+    let userTeamIds: string[] | undefined = undefined
+    if (userRole === 'admin') {
+        const { data: teamMemberships } = await supabase
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', user.id)
+
+        userTeamIds = teamMemberships?.map(t => t.team_id) || []
     }
 
     return (
@@ -43,7 +54,7 @@ export default async function ActivitiesPage({ params }: { params: { id: string 
                 </div>
             </div>
 
-            <ActivityFeed projectId={projectId} />
+            <ActivityFeed projectId={projectId} userTeamIds={userTeamIds} />
         </div>
     )
 }

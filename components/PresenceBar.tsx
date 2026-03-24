@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { Tooltip } from '@/components/ui/Tooltip' // Assuming a Tooltip component exists
 
 interface PresenceUser {
     user_id: string
