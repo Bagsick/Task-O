@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { Mail, Lock, User, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { normalizeEmail } from '@/lib/utils/email'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -32,11 +33,13 @@ export default function SignupPage() {
     setError('')
     setSuccess(false)
 
+    const normalizedEmail = normalizeEmail(email)
+
     try {
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
-        .eq('email', email)
+        .eq('email', normalizedEmail)
         .maybeSingle()
 
       if (existingUser) {
@@ -46,7 +49,7 @@ export default function SignupPage() {
       }
 
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: { data: { full_name: fullName } },
       })
