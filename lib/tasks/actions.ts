@@ -367,3 +367,54 @@ export async function deleteTask(taskId: string) {
 
     revalidatePath('/dashboard')
 }
+
+export async function bulkUpdateTaskStatus(taskIds: string[], newStatus: string, projectId: string) {
+    const { createServerSupabaseClient } = require('@/lib/supabase/server')
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('tasks')
+        .update({
+            status: newStatus,
+            updated_at: new Date().toISOString()
+        })
+        .in('id', taskIds)
+
+    if (error) throw error
+
+    await logActivity({
+        projectId,
+        type: 'bulk_status_change',
+        message: `Bulk updated ${taskIds.length} tasks to ${newStatus}`,
+        metadata: { count: taskIds.length, status: newStatus }
+    })
+
+    revalidatePath(`/projects/${projectId}/tasks`)
+    revalidatePath('/dashboard')
+}
+
+export async function bulkDeleteTasks(taskIds: string[], projectId: string) {
+    const { createServerSupabaseClient } = require('@/lib/supabase/server')
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .in('id', taskIds)
+
+    if (error) throw error
+
+    await logActivity({
+        projectId,
+        type: 'bulk_task_deletion',
+        message: `Bulk deleted ${taskIds.length} tasks`,
+        metadata: { count: taskIds.length }
+    })
+
+    revalidatePath(`/projects/${projectId}/tasks`)
+    revalidatePath('/dashboard')
+}
