@@ -430,6 +430,14 @@ const tours: Record<string, TourStep[]> = {
             action: 'custom'
         },
         {
+            id: 'tutorial-ghost-task-review',
+            targetId: 'tutorial-ghost-task',
+            title: 'Submit for Review',
+            content: 'Great! When a task is ready for feedback, move it to the "Review" column.',
+            placement: 'right',
+            action: 'custom'
+        },
+        {
             id: 'tutorial-ghost-task-2',
             targetId: 'tutorial-ghost-task',
             title: 'Complete the objective',
