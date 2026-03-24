@@ -193,7 +193,7 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
         const ghostTask: Task = {
           id: 'tutorial-ghost-task',
           title: 'Tactical Objective: Move Me!',
-          description: 'This is a tutorial task. Drag this card to the "In Progress" column to see how the board works.',
+          description: 'This is a tutorial task. Drag this card to the "In Progress" column to start.',
           status: 'pending',
           priority: 'high',
           teams: { name: 'Technical' }
@@ -250,8 +250,11 @@ export default function KanbanBoard({ projectId, teamId, userId, tasks: initialT
     if (draggableId === 'tutorial-ghost-task') {
       if (destination.droppableId === 'in_progress' && task.status === 'pending') {
         setTasks((prev) => prev.map(t => t.id === draggableId ? { ...t, status: 'in_progress' } : t))
-        nextStep() // Advance tutorial
-      } else if (destination.droppableId === 'completed' && task.status === 'in_progress') {
+        nextStep() // Advance tutorial to "Submit for Review"
+      } else if (destination.droppableId === 'review' && task.status === 'in_progress') {
+        setTasks((prev) => prev.map(t => t.id === draggableId ? { ...t, status: 'review' } : t))
+        nextStep() // Advance tutorial to "Complete the objective"
+      } else if (destination.droppableId === 'completed' && task.status === 'review') {
         setTasks((prev) => prev.map(t => t.id === draggableId ? { ...t, status: 'completed' } : t))
         nextStep() // Advance tutorial to final step
       }
