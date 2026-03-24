@@ -3,7 +3,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
-import { normalizeEmail } from '@/lib/utils/email'
 
 export async function inviteUserToWorkspace(
     email: string,
@@ -33,7 +32,7 @@ export async function inviteUserToWorkspace(
     const { data: targetUser } = await admin
         .from('users')
         .select('id, full_name')
-        .ilike('email', normalizeEmail(email))
+        .ilike('email', email)
         .single()
 
     // If user doesn't exist, in a real app we'd trigger an email invitation via Supabase Auth
