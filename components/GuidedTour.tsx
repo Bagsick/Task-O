@@ -800,10 +800,10 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
                             <button 
                                 onClick={endTour}
                                 className="fixed bottom-10 right-10 z-[100002] p-4 bg-white/90 dark:bg-slate-900/95 text-red-500 rounded-3xl border border-red-100 dark:border-red-900/30 shadow-2xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-all pointer-events-auto flex items-center gap-2 group border-4 border-red-500/20"
-                                title="Exit Tutorial"
+                                title="Quit Tutorial"
                             >
                                 <X size={20} className="group-hover:rotate-90 transition-transform" />
-                                <span className="text-xs font-black uppercase tracking-widest pr-1">Exit Tour</span>
+                                <span className="text-xs font-black uppercase tracking-widest pr-1">Quit Tutorial</span>
                             </button>
 
                             {/* THE BACKDROP - Only blocks if 'center' placement AND it's not fading out */}
