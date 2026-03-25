@@ -82,7 +82,11 @@ export default function InviteMemberModal({ isOpen, onClose, projectId: initialP
         setSuccess(false)
         setError(null)
         try {
-            await inviteUserToWorkspace(email, role, selectedTeamIds, projectId, message)
+            const result = await inviteUserToWorkspace(email, role, selectedTeamIds, projectId, message)
+            if (result?.error) {
+                setError(result.error)
+                return
+            }
             setSuccess(true)
             resetForm()
             if (onSuccess) onSuccess()
@@ -92,6 +96,7 @@ export default function InviteMemberModal({ isOpen, onClose, projectId: initialP
                 onClose()
             }, 2000)
         } catch (err: any) {
+            console.error('Client-side error in InviteMemberModal:', err)
             setError(err.message || 'Something went wrong')
         } finally {
             setLoading(false)

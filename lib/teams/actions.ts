@@ -155,36 +155,45 @@ export async function deleteTeam(id: string) {
 }
 
 export async function inviteMember(teamId: string, email: string, role: 'admin' | 'editor' | 'member' | 'viewer') {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+        const supabase = await createServerSupabaseClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) throw new Error('Unauthorized')
+        if (!user) return { error: 'Unauthorized' }
 
-    // Check if current user is owner/admin
-    const { data: membership } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('team_id', teamId)
-        .eq('user_id', user.id)
-        .single()
+        // Check if current user is owner/admin
+        const { data: membership } = await supabase
+            .from('team_members')
+            .select('role')
+            .eq('team_id', teamId)
+            .eq('user_id', user.id)
+            .single()
 
-    if (!membership || !['owner', 'admin'].includes(membership.role)) {
-        throw new Error('You do not have permission to invite members')
+        if (!membership || !['owner', 'admin'].includes(membership.role)) {
+            return { error: 'You do not have permission to invite members' }
+        }
+
+        const { error } = await supabase
+            .from('team_invitations')
+            .insert({
+                team_id: teamId,
+                email,
+                role,
+                inviter_id: user.id
+            })
+
+        if (error) {
+            console.error('Error in inviteMember:', error)
+            return { error: error.message }
+        }
+
+        // Note: In a real production app, you would send an email here.
+        revalidatePath(`/teams/${teamId}`)
+        return { success: true }
+    } catch (err: any) {
+        console.error('Unhandled error in inviteMember:', err)
+        return { error: err.message || 'An unexpected error occurred.' }
     }
-
-    const { error } = await supabase
-        .from('team_invitations')
-        .insert({
-            team_id: teamId,
-            email,
-            role,
-            inviter_id: user.id
-        })
-
-    if (error) throw error
-
-    // Note: In a real production app, you would send an email here.
-    revalidatePath(`/teams/${teamId}`)
 }
 
 export async function addTeamMember(teamId: string, userId: string, role: 'admin' | 'editor' | 'member' | 'viewer' = 'member') {

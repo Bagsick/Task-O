@@ -21,7 +21,11 @@ export default function InviteProjectMemberModal({ projectId }: { projectId: str
         setSuccess(false)
         setError(null)
         try {
-            await inviteProjectMember(projectId, email, role)
+            const result = await inviteProjectMember(projectId, email, role)
+            if (result?.error) {
+                setError(result.error)
+                return
+            }
             setSuccess(true)
             setEmail('')
             router.refresh()
@@ -30,6 +34,7 @@ export default function InviteProjectMemberModal({ projectId }: { projectId: str
                 setIsOpen(false)
             }, 3000)
         } catch (err: any) {
+            console.error('Client-side error in InviteProjectMemberModal:', err)
             setError(err.message || 'Something went wrong')
         } finally {
             setLoading(false)

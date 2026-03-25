@@ -588,8 +588,25 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
     // Silky Smooth 60FPS Tracking Loop
     useEffect(() => {
         let animationFrameId: number;
+        let lastTimeTargetFound = Date.now();
+
         const loop = () => {
             updateTargetRect();
+            
+            // Safety: if a tour is active but target is missing for > 5 seconds (and not center), auto-fading
+            let element = document.getElementById(currentStep?.targetId || '');
+            if (!element && currentStep?.fallbackTargetId) {
+                element = document.getElementById(currentStep.fallbackTargetId);
+            }
+
+            if (element || currentStep?.placement === 'center') {
+                lastTimeTargetFound = Date.now();
+            } else if (isActive && Date.now() - lastTimeTargetFound > 5000) {
+                // If target missing too long, might be stuck
+                console.warn('Tour target missing for too long, ending tour');
+                endTour();
+            }
+
             animationFrameId = requestAnimationFrame(loop);
         };
         loop();
@@ -601,7 +618,7 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
             window.removeEventListener('resize', updateTargetRect)
             window.removeEventListener('scroll', updateTargetRect, true)
         }
-    }, [updateTargetRect])
+    }, [updateTargetRect, isActive, currentStep, endTour])
 
     // Auto-advance if on the correct path
     useEffect(() => {
@@ -779,11 +796,59 @@ export function GuidedTourProvider({ children }: { children: React.ReactNode }) 
                 return (
                     <Portal>
                         <div key={activeTourId} className={`fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+                            {/* Safety Exit Button - Now in the bottom right to avoid top-nav overlap */}
+                            <button 
+                                onClick={endTour}
+                                className="fixed bottom-10 right-10 z-[100002] p-4 bg-white/90 dark:bg-slate-900/95 text-red-500 rounded-3xl border border-red-100 dark:border-red-900/30 shadow-2xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-all pointer-events-auto flex items-center gap-2 group border-4 border-red-500/20"
+                                title="Exit Tutorial"
+                            >
+                                <X size={20} className="group-hover:rotate-90 transition-transform" />
+                                <span className="text-xs font-black uppercase tracking-widest pr-1">Exit Tour</span>
+                            </button>
+
                             {/* THE BACKDROP - Only blocks if 'center' placement AND it's not fading out */}
-                            <div className={`absolute inset-0 transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${step.placement === 'center' && !isFading && (targetRect || step.placement === 'center')
-                                ? 'bg-slate-950/80 dark:bg-slate-950/90 pointer-events-auto'
-                                : 'bg-transparent pointer-events-none'
-                                }`} />
+                            {step.placement === 'center' ? (
+                                <div className={`absolute inset-0 transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${!isFading && (targetRect || step.placement === 'center')
+                                    ? 'bg-slate-950/80 dark:bg-slate-950/90 pointer-events-auto'
+                                    : 'bg-transparent pointer-events-none'
+                                    }`} />
+                            ) : (
+                                <>
+                                    {/* 4-Panel Blocking Backdrop (Non-center steps) */}
+                                    {targetRect && !isFading && (
+                                        <div className="absolute inset-0 pointer-events-none">
+                                            {/* Top block */}
+                                            <div 
+                                                className="absolute inset-x-0 top-0 bg-slate-950/40 dark:bg-black/40 pointer-events-auto"
+                                                style={{ height: Math.max(0, targetRect.top - 4) }}
+                                            />
+                                            {/* Bottom block */}
+                                            <div 
+                                                className="absolute inset-x-0 bottom-0 bg-slate-950/40 dark:bg-black/40 pointer-events-auto"
+                                                style={{ top: targetRect.bottom + 4 }}
+                                            />
+                                            {/* Left block (covering only the height of the target) */}
+                                            <div 
+                                                className="absolute left-0 bg-slate-950/40 dark:bg-black/40 pointer-events-auto"
+                                                style={{ 
+                                                    top: Math.max(0, targetRect.top - 4), 
+                                                    height: targetRect.height + 8,
+                                                    width: Math.max(0, targetRect.left - 4)
+                                                }}
+                                            />
+                                            {/* Right block (covering only the height of the target) */}
+                                            <div 
+                                                className="absolute right-0 bg-slate-950/40 dark:bg-black/40 pointer-events-auto"
+                                                style={{ 
+                                                    top: Math.max(0, targetRect.top - 4), 
+                                                    height: targetRect.height + 8,
+                                                    left: targetRect.right + 4
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                             {/* MODE 1: Standard Element Highlight (Only if NOT 'center') */}
                             {step.placement !== 'center' && targetRect && step.targetId && (
