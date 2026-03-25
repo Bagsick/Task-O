@@ -100,10 +100,13 @@ export default function TutorialModal({ isOpen, onClose, isDismissed, onToggleDi
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <div
                 className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300"
-                onClick={handleClose}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleClose();
+                }}
             />
 
             <div 
@@ -150,7 +153,7 @@ export default function TutorialModal({ isOpen, onClose, isDismissed, onToggleDi
                                                 // Auto-close with a slight delay so they see the checkmark
                                                 setTimeout(() => {
                                                     handleClose();
-                                                }, 3000);
+                                                }, 800);
                                             }
                                         }}
                                         className="sr-only"

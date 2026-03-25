@@ -185,8 +185,12 @@ export default function Sidebar({ currentUser }: SidebarProps) {
         if (pathname === '/dashboard') {
             const hasSeen = localStorage.getItem('hasSeenTutorial')
             if (!hasSeen) {
-                setIsTutorialOpen(true)
-                localStorage.setItem('hasSeenTutorial', 'true')
+                // Check if we are already in a tour
+                const activeTour = localStorage.getItem('activeTour')
+                if (!activeTour) {
+                    setIsTutorialOpen(true)
+                    localStorage.setItem('hasSeenTutorial', 'true')
+                }
             }
         }
     }, [pathname])
@@ -371,8 +375,8 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                         {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Support</span>}
                     </Link>
 
-                    {/* Tutorial */}
                     <button
+                        id="sidebar-tutorial"
                         onClick={() => {
                             setIsMobileOpen(false)
                             setIsTutorialOpen(true)
@@ -458,16 +462,21 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                                 </div>
                                 Help and Support
                             </Link>
-                            <Link
-                                href="/invite"
-                                onClick={() => setIsProfileOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-[#f3f4ff] dark:hover:bg-slate-800 hover:text-[#0077B6] transition-colors"
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('hasSeenTutorial');
+                                    localStorage.removeItem('activeTour');
+                                    localStorage.removeItem('activeTourStep');
+                                    localStorage.removeItem('tutorialDismissed');
+                                    window.location.reload();
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 transition-colors border-t border-gray-100 dark:border-slate-800"
                             >
-                                <div className="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-500">
-                                    <UserPlus size={18} />
+                                <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500">
+                                    <X size={18} />
                                 </div>
-                                Invite Friends
-                            </Link>
+                                Reset Tutorial
+                            </button>
                         </div>
                     )}
 

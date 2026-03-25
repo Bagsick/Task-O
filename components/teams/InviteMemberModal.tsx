@@ -19,7 +19,11 @@ export default function InviteMemberModal({ teamId }: { teamId: string }) {
         setSuccess(false)
         setError(null)
         try {
-            await inviteMember(teamId, email, role)
+            const result = await inviteMember(teamId, email, role)
+            if (result?.error) {
+                setError(result.error)
+                return
+            }
             setSuccess(true)
             setEmail('')
             setTimeout(() => {
@@ -27,6 +31,7 @@ export default function InviteMemberModal({ teamId }: { teamId: string }) {
                 setIsOpen(false)
             }, 3000)
         } catch (err: any) {
+            console.error('Client-side error in Team InviteMemberModal:', err)
             setError(err.message || 'Something went wrong')
         } finally {
             setLoading(false)
