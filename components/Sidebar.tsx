@@ -151,6 +151,7 @@ export default function Sidebar({ currentUser }: SidebarProps) {
     }, [currentProjectId, currentUser?.id])
 
     const [unreadCount, setUnreadCount] = useState(0)
+    const [openSupportCount, setOpenSupportCount] = useState(0)
 
     useEffect(() => {
         if (!currentUser?.id) return
@@ -179,6 +180,32 @@ export default function Sidebar({ currentUser }: SidebarProps) {
 
         return () => { supabase.removeChannel(channel) }
     }, [currentUser?.id])
+
+    useEffect(() => {
+        if (!isAdmin || !currentUser?.id) return
+
+        const fetchOpenSupportCount = async () => {
+            const { count } = await supabase
+                .from('support_requests')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'Open')
+
+            if (count !== null) setOpenSupportCount(count)
+        }
+
+        fetchOpenSupportCount()
+
+        const channel = supabase
+            .channel('sidebar-support-requests')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'support_requests',
+            }, () => { fetchOpenSupportCount() })
+            .subscribe()
+
+        return () => { supabase.removeChannel(channel) }
+    }, [isAdmin, currentUser?.id])
 
     // Auto-trigger tutorial for new users
     useEffect(() => {
@@ -412,7 +439,17 @@ export default function Sidebar({ currentUser }: SidebarProps) {
                                 className={navLinkClass(pathname.startsWith('/admin/support') && !pathname.includes('analytics'))}
                             >
                                 <Shield size={18} className={navIconClass(pathname.startsWith('/admin/support') && !pathname.includes('analytics'))} />
-                                {(!isCollapsed || isMobileOpen) && <span className="text-[11px] uppercase tracking-widest">Support Management</span>}
+                                {(!isCollapsed || isMobileOpen) && (
+                                    <div className="flex flex-1 items-center justify-between">
+                                        <span className="text-[11px] uppercase tracking-widest">Support Management</span>
+                                        {openSupportCount > 0 && (
+                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-annoying-glow shadow-[0_0_10px_rgba(239,68,68,0.5)] ring-2 ring-white dark:ring-slate-900 mr-1.5"></span>
+                                        )}
+                                    </div>
+                                )}
+                                {isCollapsed && !isMobileOpen && openSupportCount > 0 && (
+                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-annoying-glow shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+                                )}
                             </Link>
 
                             <Link
