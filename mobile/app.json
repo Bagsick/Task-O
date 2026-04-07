@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Task-O",
+    "slug": "task-o-mobile-hf",
+    "scheme": "tasko",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#fcfcfd"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.tasko.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#fcfcfd"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "78fc1ea6-223c-40a1-84d7-7a7e907ceae4"
+      }
+    },
+    "owner": "yukihirasoma45"
+  }
+}
